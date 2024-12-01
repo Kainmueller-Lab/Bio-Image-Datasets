@@ -1,4 +1,4 @@
-from bio_image_datasets import Dataset
+from bio_image_datasets.dataset import Dataset
 
 
 def test_dataset():
