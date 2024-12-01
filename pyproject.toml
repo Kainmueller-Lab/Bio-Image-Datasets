@@ -11,7 +11,7 @@ requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "Lorenz Rumberger" }, { name = "Noah F. Greenwald" }]
 maintainers = [
-    { name = "Lorenz Rumberger", email = "joseflorenz.rumberger" },
+    { name = "Lorenz Rumberger", email = "joseflorenz.rumberger@mdc-berlin.de" },
 ]
 urls.Documentation = "https://Bio-Image-Datasets.readthedocs.io/"
 urls.Source = "https://github.com/Kainmueller-Lab/Bio-Image-Datasets"
