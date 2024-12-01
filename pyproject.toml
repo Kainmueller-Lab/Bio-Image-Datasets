@@ -17,7 +17,7 @@ urls.Documentation = "https://Bio-Image-Datasets.readthedocs.io/"
 urls.Source = "https://github.com/Kainmueller-Lab/Bio-Image-Datasets"
 urls.Home-page = "https://github.com/Kainmueller-Lab/Bio-Image-Datasets"
 dependencies = [
-    "torch>=2.2.0",
+#    "torch>=2.2.0",
     "scikit-image",
     "tqdm",
     "numpy",
