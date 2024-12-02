@@ -15,6 +15,8 @@ def center_pad_to_size(array, desired_shape=224):
     """
     current_shape = array.shape
     assert len(current_shape) == len(desired_shape), "Array and desired shape must have the same number of dimensions."
+    # assert that desired shape values are >= 0
+    assert all(dim >= 0 for dim in desired_shape), "Desired shape values must be non-negative."
 
     pad_widths = []
     for current_size, desired_size in zip(current_shape, desired_shape):
