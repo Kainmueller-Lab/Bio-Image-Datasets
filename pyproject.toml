@@ -9,7 +9,7 @@ description = "Contains dataloaders for popular bio-medical image datasets."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
-authors = [{ name = "Lorenz Rumberger" }, { name = "Noah F. Greenwald" }]
+authors = [{ name = "Lorenz Rumberger" }]
 maintainers = [
     { name = "Lorenz Rumberger", email = "joseflorenz.rumberger@mdc-berlin.de" },
 ]
@@ -24,6 +24,7 @@ dependencies = [
     "pandas",
     "pathlib",
     "lmdb",
+    "h5py",
 ]
 
 [[project.source]]
