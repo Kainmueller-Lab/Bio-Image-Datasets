@@ -9,9 +9,8 @@ class LizardDataset(Dataset):
     """Dataset class for the Lizard dataset."""
 
     def __init__(self, 
-                 local_path: str = '~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads', 
-                 transform: Optional[Callable] = None):
-        super().__init__(local_path, transform)
+                 local_path: str = '~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads'):
+        super().__init__(local_path)
         self.local_path = os.path.expanduser(local_path)
         self.image_paths = []
         self.label_paths = []
