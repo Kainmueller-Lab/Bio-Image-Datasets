@@ -81,4 +81,4 @@ def test_get_sample_name():
         file_paths = prepare_schuerch_samples(tmp_dir, num_samples=5)
         dataset = SchuerchDataset(local_path=tmp_dir)
         sample_name = dataset.get_sample_name(0)
-        assert sample_name in ["sample_1", "sample_2", "sample_3", "sample_4", "sample_5"]
+        assert sample_name in [f"sample_{i}.h5" for i in range(1, 6)]
