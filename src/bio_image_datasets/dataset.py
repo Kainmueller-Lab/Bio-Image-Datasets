@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
 
 
 class Dataset(ABC):
@@ -9,9 +8,8 @@ class Dataset(ABC):
         local_path (str): Path to the dataset.
         transform (Optional[Callable]): Transform to apply to the data.
     """
-    def __init__(self, local_path: str, transform: Optional[Callable] = None):
+    def __init__(self, local_path: str):
         self.local_path = local_path
-        self.transform = transform
 
     @abstractmethod
     def __len__(self):
@@ -33,6 +31,12 @@ class Dataset(ABC):
         """Return the semantic mask at the given index."""
         raise NotImplementedError
 
+    @abstractmethod
+    def get_class_mapping(self):
+        """Return the class mapping dict mapping int to str."""
+        raise NotImplementedError
+
+    @abstractmethod
     def get_instance_mask(self, idx):
         """Return the instance mask at the given index."""
         raise NotImplementedError
