@@ -26,10 +26,18 @@ def prepare_schuerch_samples(output_dir, num_samples=5):
 
         with h5py.File(file_path, "w") as f:
             # Create mock data
-            f.create_dataset("gt_ct", data=np.random.randint(0, 30, size=(1, 1440, 1920), dtype=np.uint16))
-            f.create_dataset("gt_inst", data=np.random.randint(0, 1000, size=(1, 1440, 1920), dtype=np.uint16))
-            f.create_dataset("ifl", data=np.random.randint(0, 65535, size=(58, 1440, 1920), dtype=np.uint16))
-            f.create_dataset("img", data=np.random.randint(0, 65535, size=(3, 1440, 1920), dtype=np.uint16))
+            f.create_dataset(
+                "gt_ct", data=np.random.randint(0, 30, size=(1, 1440, 1920), dtype=np.uint16)
+            )
+            f.create_dataset(
+                "gt_inst", data=np.random.randint(0, 1000, size=(1, 1440, 1920), dtype=np.uint16)
+            )
+            f.create_dataset(
+                "ifl", data=np.random.randint(0, 65535, size=(58, 1440, 1920), dtype=np.uint16)
+            )
+            f.create_dataset(
+                "img", data=np.random.randint(0, 65535, size=(3, 1440, 1920), dtype=np.uint16)
+            )
     
     return file_paths
 
@@ -50,6 +58,14 @@ def test_getitem():
         assert "gt_inst" in sample
         assert "immunoflourescence_img" in sample
         assert "he_img" in sample
+
+
+def test_get_he():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        file_paths = prepare_schuerch_samples(tmp_dir, num_samples=5)
+        dataset = SchuerchDataset(local_path=tmp_dir)
+        he_data = dataset.get_he(0)
+        assert he_data.shape == (3, 1440, 1920)
 
 
 def test_get_if():
@@ -76,9 +92,26 @@ def test_get_instance_mask():
         assert instance_mask.shape == (1440, 1920)
 
 
+def test_get_semantic_mask():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        file_paths = prepare_schuerch_samples(tmp_dir, num_samples=5)
+        dataset = SchuerchDataset(local_path=tmp_dir)
+        semantic_mask = dataset.get_semantic_mask(0)
+        assert semantic_mask.shape == (1440, 1920)
+
+
 def test_get_sample_name():
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_paths = prepare_schuerch_samples(tmp_dir, num_samples=5)
         dataset = SchuerchDataset(local_path=tmp_dir)
         sample_name = dataset.get_sample_name(0)
         assert sample_name in [f"sample_{i}.h5" for i in range(1, 6)]
+
+
+def test_get_sample_names():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        file_paths = prepare_schuerch_samples(tmp_dir, num_samples=5)
+        dataset = SchuerchDataset(local_path=tmp_dir)
+        sample_names = dataset.get_sample_names()
+        assert len(sample_names) == 5
+        assert all([name in [f"sample_{i}.h5" for i in range(1, 6)] for name in sample_names])
