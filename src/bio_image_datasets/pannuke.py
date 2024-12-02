@@ -71,9 +71,9 @@ class PanNukeDataset(Dataset):
         masks = np.load(self.masks_file)
 
         data = {
-            "type": types[idx],
-            "gt_inst": masks[idx],
-            "he_img": image[idx],
+            "image": image[idx],
+            "type": types,
+            "mask": np.squeeze(f["ifl"][:]),
         }
         return data
 
@@ -85,24 +85,17 @@ class PanNukeDataset(Dataset):
         Returns:
             np.ndarray: The HE image.
         """
-        if idx >= len(self):
-            raise IndexError("Index out of bounds.")
+        pass
 
-        images = np.load(self.images_file)
-
-    def get_if(self, idx):
-        """Load immunofluorescence (IFL) data for the given index.
+    def get_tissue_type(self, idx):
+        """Load tissue type.
         
         Args:
             idx (int): Index of the sample.
         Returns:
-            np.ndarray: The immunofluorescence data.
+            tissue type (string): The tissue type.
         """
-        if idx >= len(self):
-            raise IndexError("Index out of bounds.")
-        file_path = self.file_paths[idx]
-        with h5py.File(file_path, 'r') as f:
-            return np.squeeze(f["ifl"][:])
+        pass
 
     def get_class_mapping(self):
         """Return the class mapping for the dataset.
@@ -120,11 +113,7 @@ class PanNukeDataset(Dataset):
         Returns:
             np.ndarray: The instance mask.
         """
-        if idx >= len(self):
-            raise IndexError("Index out of bounds.")
-        file_path = self.file_paths[idx]
-        with h5py.File(file_path, 'r') as f:
-            return np.squeeze(f["gt_inst"][:])
+        pass
 
     def get_semantic_mask(self, idx):
         """Return the semantic mask at the given index.
@@ -134,11 +123,7 @@ class PanNukeDataset(Dataset):
         Returns:
             np.ndarray: The semantic mask.
         """
-        if idx >= len(self):
-            raise IndexError("Index out of bounds.")
-        file_path = self.file_paths[idx]
-        with h5py.File(file_path, 'r') as f:
-            return np.squeeze(f["gt_ct"][:])
+        pass
 
     def get_sample_name(self, idx):
         """Return the sample name for the given index.
@@ -148,14 +133,12 @@ class PanNukeDataset(Dataset):
         Returns:
             str: The sample name.
         """
-        if idx >= len(self):
-            raise IndexError("Index out of bounds.")
-        return self.files[idx]
+        pass
 
     def get_sample_names(self):
         """Return the list of all sample names."""
-        return self.files
+        pass
 
     def __repr__(self):
         """Return the string representation of the dataset."""
-        return f"SchuerchDataset ({self.local_path}, {len(self)} samples)"
+        pass
