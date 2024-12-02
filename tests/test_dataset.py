@@ -27,6 +27,12 @@ def test_dataset():
         def get_sample_names(self):
             return None
         
+        def get_instance_mask(self, idx):
+            return None
+
+        def get_class_mapping(self):
+            return None
+
         def __repr__(self):
             return None
     
