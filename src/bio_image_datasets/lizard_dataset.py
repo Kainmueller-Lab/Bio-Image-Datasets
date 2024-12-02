@@ -53,8 +53,6 @@ class LizardDataset(Dataset):
             'instance_mask': instance_mask,
             'sample_name': self.get_sample_name(idx)
         }
-        if self.transform:
-            sample = self.transform(sample)
         return sample
 
     def get_he(self, idx):
