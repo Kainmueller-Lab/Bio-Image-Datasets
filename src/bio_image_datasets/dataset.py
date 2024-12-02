@@ -33,7 +33,6 @@ class Dataset(ABC):
         """Return the semantic mask at the given index."""
         raise NotImplementedError
 
-    @abstractmethod
     def get_instance_mask(self, idx):
         """Return the instance mask at the given index."""
         raise NotImplementedError
