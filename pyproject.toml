@@ -9,9 +9,10 @@ description = "Contains dataloaders for popular bio-medical image datasets."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
-authors = [{ name = "Lorenz Rumberger" }]
+authors = [{ name = "Lorenz Rumberger" }, { name = "Nora Koreuber" }]
 maintainers = [
     { name = "Lorenz Rumberger", email = "joseflorenz.rumberger@mdc-berlin.de" },
+    { name = "Nora Koreuber", email = "nora.koreuber@mdc-berlin.de" },
 ]
 urls.Documentation = "https://Bio-Image-Datasets.readthedocs.io/"
 urls.Source = "https://github.com/Kainmueller-Lab/Bio-Image-Datasets"
