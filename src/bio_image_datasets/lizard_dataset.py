@@ -10,8 +10,8 @@ class LizardDataset(Dataset):
 
     def __init__(self, 
                  local_path: str = '~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads', 
-                 transform: Optional[Callable] = None):
-        super().__init__(local_path, transform)
+        ):
+        super().__init__(local_path)
         self.local_path = os.path.expanduser(local_path)
         self.image_paths = []
         self.label_paths = []
@@ -54,8 +54,6 @@ class LizardDataset(Dataset):
             'instance_mask': instance_mask,
             'sample_name': self.get_sample_name(idx)
         }
-        if self.transform:
-            sample = self.transform(sample)
         return sample
 
     def get_he(self, idx):
