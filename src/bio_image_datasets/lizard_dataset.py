@@ -1,9 +1,10 @@
 import os
-from typing import Callable, Optional, List
+from typing import Optional
 import scipy.io as sio
 import numpy as np
 from PIL import Image
 from bio_image_datasets.dataset import Dataset
+import pandas as pd
 
 class LizardDataset(Dataset):
     """Dataset class for the Lizard dataset."""
@@ -15,6 +16,7 @@ class LizardDataset(Dataset):
         self.image_paths = []
         self.label_paths = []
         self.sample_names = []
+        self.sample_splits = []  # New list to store splits
 
         # Define image directories
         image_dirs = [
@@ -23,6 +25,17 @@ class LizardDataset(Dataset):
         ]
         # Define label directory
         label_dir = os.path.join(self.local_path, 'lizard_labels', 'Lizard_Labels', 'Labels')
+        # Define path to info.csv
+        info_csv_path = os.path.join(self.local_path, 'lizard_labels', 'Lizard_Labels', 'info.csv')
+
+        # Read info.csv
+        if os.path.exists(info_csv_path):
+            info_df = pd.read_csv(info_csv_path)
+            # Create a mapping from Filename to Split
+            filename_to_split = dict(zip(info_df['Filename'], info_df['Split']))
+        else:
+            print(f"Warning: info.csv not found at {info_csv_path}")
+            filename_to_split = {}
 
         # Collect image and label file paths
         for image_dir in image_dirs:
@@ -32,9 +45,17 @@ class LizardDataset(Dataset):
                     label_name = file_name.replace('.png', '.mat')
                     label_path = os.path.join(label_dir, label_name)
                     if os.path.exists(label_path):
+                        sample_name = file_name.replace('.png', '')
                         self.image_paths.append(image_path)
                         self.label_paths.append(label_path)
-                        self.sample_names.append(file_name.replace('.png', ''))
+                        self.sample_names.append(sample_name)
+                        # Get split from mapping
+                        split = filename_to_split.get(sample_name, None)
+                        if split is None:
+                            print(f"Warning: Split not found for sample {sample_name}")
+                            self.sample_splits.append(None)
+                        else:
+                            self.sample_splits.append(split)
                     else:
                         print(f"Warning: Label file {label_name} not found for image {file_name}")
 
@@ -51,7 +72,8 @@ class LizardDataset(Dataset):
             'image': image,
             'semantic_mask': semantic_mask,
             'instance_mask': instance_mask,
-            'sample_name': self.get_sample_name(idx)
+            'sample_name': self.get_sample_name(idx),
+            'split': self.get_sample_split(idx)  # Added split information
         }
         return sample
 
@@ -90,6 +112,14 @@ class LizardDataset(Dataset):
     def get_sample_names(self):
         """Return the list of sample names."""
         return self.sample_names
+
+    def get_sample_split(self, idx):
+        """Return the split value for the sample at the given index."""
+        return self.sample_splits[idx]
+
+    def get_sample_splits(self):
+        """Return the list of sample splits."""
+        return self.sample_splits
 
     def _load_label(self, idx):
         """Helper function to load label data from a .mat file."""

@@ -47,6 +47,7 @@ def transform_to_tiles(dataset, idx, tile_size=224):
     inst_mask = dataset.get_instance_mask(idx)
     seg_mask = dataset.get_semantic_mask(idx)
     sample_name = dataset.get_sample_name(idx)
+    sample_split = dataset.get_sample_split(idx)
 
     # Get the dimensions of the image
     _, height, width = image.shape  # C x H x W
@@ -94,6 +95,7 @@ def transform_to_tiles(dataset, idx, tile_size=224):
                 "semantic_mask": seg_tile,
                 "instance_mask": inst_map,
                 "sample_name": tile_sample_name,
+                "sample_split": sample_split
             }
 
             # Append the tile dictionary to the list
