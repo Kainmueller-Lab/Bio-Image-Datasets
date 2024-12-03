@@ -29,7 +29,7 @@ def prepare_consep_samples(output_dir, num_samples=5):
     os.makedirs(label_path, exist_ok=True)
 
 
-    file_paths = [f"sample{i}.png" for i in range(num_samples)]
+    file_paths = [f"sample_{i}.png" for i in range(num_samples)]
 
     for filename in file_paths:
 
