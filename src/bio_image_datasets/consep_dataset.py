@@ -20,7 +20,6 @@ class ConSePDataset(Dataset):
         
         self.image_files = os.listdir(self.image_path)
         self.label_files = os.listdir(self.label_path)
-        pass
 
 
     def __len__(self):
