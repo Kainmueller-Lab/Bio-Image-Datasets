@@ -25,6 +25,7 @@ dependencies = [
     "pandas",
     "pathlib",
     "lmdb",
+    "h5py",
 ]
 
 [[project.source]]
