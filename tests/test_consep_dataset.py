@@ -107,7 +107,7 @@ def test_get_sample_name():
         file_paths = prepare_consep_samples(tmp_dir, num_samples=5)
         dataset = ConSePDataset(local_path=tmp_dir)
         sample_name = dataset.get_sample_name(0)
-        assert sample_name in [f"sample_{i}.png" for i in range(1, 6)]
+        assert sample_name in [f"sample_{i}.png" for i in range(5)]
 
 
 def test_get_sample_names():
@@ -116,4 +116,4 @@ def test_get_sample_names():
         dataset = ConSePDataset(local_path=tmp_dir)
         sample_names = dataset.get_sample_names()
         assert len(sample_names) == 5
-        assert all([name in [f"sample_{i}.h5" for i in range(1, 6)] for name in sample_names])
+        assert all([name in [f"sample_{i}.png" for i in range(5)] for name in sample_names])
