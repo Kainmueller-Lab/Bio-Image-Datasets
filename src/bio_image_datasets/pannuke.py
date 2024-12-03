@@ -70,8 +70,9 @@ class PanNukeDataset(Dataset):
             dict: A dictionary containing the following keys:
                 - "image": Hematoxylin and eosin (HE) image
                 - "type": Tissue type where the sample comes from
-                - "semantic": Ground truth semantic mask.
-                - "instance": Ground truth instance mask.
+                - "semantic_mask": Ground truth semantic mask
+                - "instance_mask": Ground truth instance mask
+                - "sample_name": Index of the sample as string
         """
         if idx >= len(self):
             raise IndexError("Index out of bounds.")
@@ -142,12 +143,11 @@ class PanNukeDataset(Dataset):
         Returns:
             str: The sample name.
         """
-
         return str(idx)
 
     def get_sample_names(self):
         """Return the list of all sample names."""
-        return "No sample names available for PanNuke"
+        return [str(i) for i in range(int(len(self)))]
 
     def __repr__(self):
         """Return the string representation of the dataset."""
