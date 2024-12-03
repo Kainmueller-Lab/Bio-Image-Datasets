@@ -114,3 +114,11 @@ def test_get_sample_name():
         dataset = PanNukeDataset(local_path=local_path)
         sample_name = dataset.get_sample_name(0)
         assert sample_name == "0"
+
+def test_get_sample_names():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        local_path = os.path.join(tmp_dir, 'fold1')
+        file_paths = prepare_pannuke_samples(local_path, num_samples=5)
+        dataset = PanNukeDataset(local_path=local_path)
+        sample_names = dataset.get_sample_names()
+        assert sample_names == ["0", "1", "2", "3", "4"]
