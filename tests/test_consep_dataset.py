@@ -39,20 +39,21 @@ def prepare_consep_samples(output_dir, num_samples=5):
 
         instance_map = np.random.randint(0, 10, size=(244, 244), dtype=np.uint16)
         class_labels = np.random.randint(0, 3, size=(10), dtype=np.uint16)
+        empty_array = np.zeros(10)
 
         mock_label_data = {'__header__':None, 
                            '__version__':None, 
                            '__globals__':None, 
-                           'roi_name':None, 
-                           'has_box':None, 
+                           'roi_name':empty_array, 
+                           'has_box':empty_array, 
                            'instance_map':instance_map, 
-                           'has_centroid':None, 
-                           'has_label':None, 
-                           'n_cells_str':None, 
-                           'has_mask':None, 
-                           'fully_annotated_str':None, 
+                           'has_centroid':empty_array, 
+                           'has_label':empty_array, 
+                           'n_cells_str':empty_array, 
+                           'has_mask':empty_array, 
+                           'fully_annotated_str':empty_array, 
                            'class_labels':class_labels, 
-                           'coordinates':None}
+                           'coordinates':empty_array}
 
         sio.savemat(label_path.joinpath(filename.replace(".png", ".mat")), mock_label_data)
 
