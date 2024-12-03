@@ -92,7 +92,7 @@ class ConSePDataset(Dataset):
                 semantic_dict[class_id].append(instance_id)
 
         for class_id, instance_ids in semantic_dict.items():
-            semantic_mask[instance_mask.isin(instance_ids)] = class_id 
+            semantic_mask[np.isin(instance_mask, instance_ids)] = class_id 
 
         # 
 
