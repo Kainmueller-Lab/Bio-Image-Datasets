@@ -66,7 +66,7 @@ class ConSePDataset(Dataset):
         Returns:
             np.array: H&E-stained image.
         """
-        img_array = np.array(Image.open(self.image_files.joinpath(self.image_files[idx])))
+        img_array = np.array(Image.open(self.image_path.joinpath(self.image_files[idx])))
         return  np.transpose(img_array, (2, 0, 1)) # HWC to CHW 
     
     
