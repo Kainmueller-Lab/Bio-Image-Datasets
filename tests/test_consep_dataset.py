@@ -33,9 +33,9 @@ def prepare_consep_samples(output_dir, num_samples=5):
 
     for filename in file_paths:
 
-        image_path = os.path.join(image_path, filename)
+        tmp_image_path = os.path.join(image_path, filename)
         mock_image = Image.new('RGB', (244, 244), color=(255, 0, 0))
-        mock_image.save(image_path)
+        mock_image.save(tmp_image_path)
 
         instance_map = np.random.randint(0, 10, size=(244, 244), dtype=np.uint16)
         class_labels = np.random.randint(0, 3, size=(10), dtype=np.uint16)
