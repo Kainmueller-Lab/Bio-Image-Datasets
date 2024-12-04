@@ -230,7 +230,12 @@ class SchuerchDataset(Dataset):
             raise IndexError("Index out of bounds.")
         file_path = self.file_paths[idx]
         with h5py.File(file_path, 'r') as f:
-            return np.squeeze(f["gt_inst"][:])
+            instance_mask = np.squeeze(f["gt_inst"][:])
+            semantic_mask = np.squeeze(f["gt_ct"][:])
+            _, instance_mask = exclude_classes(
+                semantic_mask=semantic_mask, exclude_classes=[17], instance_mask=instance_mask
+            )
+        return instance_mask
 
     def get_semantic_mask(self, idx):
         """Return the semantic mask at the given index.
