@@ -17,8 +17,10 @@ class SegPath(Dataset):
 
         Args:
             local_path (str): Path to the dataset
+            microns_per_pixel (float): Microns per pixel in the dataset
         Parameters:
             local_path (str): Path to the dataset
+            original_microns_per_pixel (float): Microns per pixel in the original dataset
             microns_per_pixel (float): Microns per pixel in the dataset
             all_cell_types (dict): All cell types in the dataset
         """
@@ -70,20 +72,23 @@ class SegPath(Dataset):
         """The SegPath dataset is avaliable via zenodo (see https://dakomura.github.io/SegPath/)"""
         pass
 
-    def _resize(self, image, resolution, target_resolution, interp='bilinear'):
+    def _resize(self, image, interp='bilinear'):
         """
-        Resize an image to the target size.
+        Resize an image to the desired resolution.
         
         Args:
             image (np.array): Image to resize.
-            resolution (float): Resolution of the image in microns per pixel.
-            target_resolution (float): Target resolution in microns per pixel.
             interp (str): Interpolation method options: 'bilinear', 'nearest'.
         Returns:
             np.array: Resized image.
         """
-        scale = resolution / target_resolution
-        return rescale(image, scale, multichannel=True, anti_aliasing=True, mode=interp)
+        mode = 0 if interp == 'nearest' else 1
+        anti_aliasing = mode == 1
+        scale = self.original_microns_per_pixel / self.microns_per_pixel
+        channel_axis = 2 if image.ndim == 3 else None
+        return rescale(
+            image, scale, order=mode, anti_aliasing=anti_aliasing,
+            preserve_range=True, channel_axis=channel_axis).astype('uint8')
 
     def __len__(self):
         """Return the number of samples in the dataset."""
@@ -112,7 +117,8 @@ class SegPath(Dataset):
         Returns:
             np.array: The HE image at the specified index with shape (HxWx3).
         """
-        return io.imread(self.image_paths[idx]+self.ext_HE)
+        image = io.imread(self.image_paths[idx]+self.ext_HE)
+        return self._resize(image)
 
     def get_semantic_mask(self, idx):
         """
@@ -124,6 +130,7 @@ class SegPath(Dataset):
             np.array: The semantic mask at the specified index with shape (HxW).
         """
         mask_binary = io.imread(self.image_paths[idx]+self.ext_sem_mask)
+        mask_binary = self._resize(mask_binary, interp='nearest')
         class_idx = self.annotated_class[idx]
         return ((mask_binary == 1)*class_idx).astype('uint8')
     
