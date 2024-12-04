@@ -2,40 +2,41 @@ import os
 import h5py
 import numpy as np
 from bio_image_datasets.dataset import Dataset
+from copy import copy
 
 
 mapping_dict = {
-            0: "background",
-            1: "B cells",
-            2: "CD11b+ monocytes",
-            3: "CD11b+CD68+ macrophages",
-            4: "CD11c+ DCs",
-            5: "CD163+ macrophages",
-            6: "CD3+ T cells",
-            7: "CD4+ T cells",
-            8: "CD4+ T cells CD45RO+",
-            9: "CD4+ T cells GATA3+",
-            10: "CD68+ macrophages",
-            11: "CD68+ macrophages GzmB+",
-            12: "CD68+CD163+ macrophages",
-            13: "CD8+ T cells",
-            14: "NK cells",
-            15: "Tregs",
-            16: "adipocytes",
-            17: "dirt",
-            18: "granulocytes",
-            19: "immune cells",
-            20: "immune cells / vasculature",
-            21: "lymphatics",
-            22: "nerves",
-            23: "plasma cells",
-            24: "smooth muscle",
-            25: "stroma",
-            26: "tumor cells",
-            27: "tumor cells / immune cells",
-            28: "undefined",
-            29: "vasculature",
-        }
+    0: "background",
+    1: "B cells",
+    2: "CD11b+ monocytes",
+    3: "CD11b+CD68+ macrophages",
+    4: "CD11c+ DCs",
+    5: "CD163+ macrophages",
+    6: "CD3+ T cells",
+    7: "CD4+ T cells",
+    8: "CD4+ T cells CD45RO+",
+    9: "CD4+ T cells GATA3+",
+    10: "CD68+ macrophages",
+    11: "CD68+ macrophages GzmB+",
+    12: "CD68+CD163+ macrophages",
+    13: "CD8+ T cells",
+    14: "NK cells",
+    15: "Tregs",
+    16: "adipocytes",
+    17: "dirt",
+    18: "granulocytes",
+    19: "immune cells",
+    20: "immune cells / vasculature",
+    21: "lymphatics",
+    22: "nerves",
+    23: "plasma cells",
+    24: "smooth muscle",
+    25: "stroma",
+    26: "tumor cells",
+    27: "tumor cells / immune cells",
+    28: "undefined",
+    29: "vasculature",
+}
 
 
 class SchuerchDataset(Dataset):
@@ -164,3 +165,102 @@ class SchuerchDataset(Dataset):
     def __repr__(self):
         """Return the string representation of the dataset."""
         return f"SchuerchDataset ({self.local_path}, {len(self)} samples)"
+
+
+def exclude_classes(semantic_mask, exclude_classes, instance_mask=None):
+    """Exclude classes from the data.
+    
+    Args:
+        semantic_mask (np.ndarray): The semantic mask.
+        exclude_classes (list): List of classes to exclude.
+        instance_mask (np.ndarray): The instance mask.
+    Returns:
+        np.ndarray: The updated semantic mask.
+        optional np.ndarray: The updated instance mask.
+    """
+    # Make a copy of the input masks
+    semantic_mask = copy(semantic_mask)	
+    if instance_mask is not None:
+        instance_mask = copy(instance_mask)
+    # Exclude classes
+    for cls in exclude_classes:
+        if instance_mask is not None:
+            instance_mask[semantic_mask == cls] = 0
+        semantic_mask[semantic_mask == cls] = 0
+    if instance_mask is not None:
+        return semantic_mask, instance_mask
+    return semantic_mask
+
+
+coarse_mapping = {
+    0: 'Background',
+    1: 'B cells',
+    3: 'Macrophages/Monocytes',
+    4: 'Adipocytes',
+    5: 'Dendritic cells',
+    6: 'T cells',
+    7: 'Granulocytes',
+    8 : 'NK cells',
+    9 : 'Nerves',
+    10: 'Plasma cells',
+    11: 'Smooth muscle',
+    12: 'Stroma',
+    13: 'Tumor cells',
+    14: 'Vasculature/Lymphatics',
+    15: 'Other cells',
+}
+
+
+ct_rename_dict = {
+    "background": "Background",
+    "B cells": "B cells",
+    "CD11b+ monocytes": "Macrophages/Monocytes",
+    "CD11b+CD68+ macrophages": "Macrophages/Monocytes",
+    "CD11c+ DCs": "Dendritic cells",
+    "CD163+ macrophages": "Macrophages/Monocytes",
+    "CD3+ T cells": "T cells",
+    "CD4+ T cells": "T cells",
+    "CD4+ T cells CD45RO+": "T cells",
+    "CD4+ T cells GATA3+": "T cells",
+    "CD68+ macrophages": "Macrophages/Monocytes",
+    "CD68+ macrophages GzmB+": "Macrophages/Monocytes",
+    "CD68+CD163+ macrophages": "Macrophages/Monocytes",
+    "CD8+ T cells": "T cells",
+    "NK cells": "NK cells",
+    "Tregs": "T cells",
+    "adipocytes": "Adipocytes",
+    "granulocytes": "Granulocytes",
+    "immune cells": "Other cells",
+    "immune cells / vasculature": "Other cells",
+    "lymphatics": "Vasculature/Lymphatics",
+    "nerves": "Nerves",
+    "plasma cells": "Plasma cells",
+    "smooth muscle": "Smooth muscle",
+    "stroma": "Stroma",
+    "tumor cells": "Tumor cells",
+    "tumor cells / immune cells": "Other cells",
+    "undefined": "Other cells",
+    "vasculature": "Vasculature/Lymphatics",
+}
+
+
+coarse_mapping_reverse = {v: k for k, v in coarse_mapping.items()}
+ct_rename_dict_new_class_names = {k: coarse_mapping_reverse[v] for k, v in ct_rename_dict.items()}
+semantic_id_old_to_new = {
+    k: ct_rename_dict_new_class_names[v] for k, v in mapping_dict.items() if v != "dirt"
+}
+
+
+def transform_semantic_mask(semantic_mask, mapping_dict):
+    """Transform the semantic mask using the given mapping dictionary.
+    
+    Args:
+        semantic_mask (np.ndarray): The semantic mask.
+        mapping_dict (dict): A dictionary mapping class indices to class names.
+    Returns:
+        np.ndarray: The transformed semantic mask.
+    """
+    transformed_mask = np.zeros_like(semantic_mask)
+    for k, v in mapping_dict.items():
+        transformed_mask[semantic_mask == k] = v
+    return transformed_mask
