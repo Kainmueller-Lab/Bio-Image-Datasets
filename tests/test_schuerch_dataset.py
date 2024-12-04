@@ -1,4 +1,5 @@
-from bio_image_datasets.schuerch_dataset import SchuerchDataset, mapping_dict
+from bio_image_datasets.schuerch_dataset import (SchuerchDataset, mapping_dict, exclude_classes,
+                                                 transform_semantic_mask)
 import os
 import h5py
 import numpy as np
@@ -115,3 +116,35 @@ def test_get_sample_names():
         sample_names = dataset.get_sample_names()
         assert len(sample_names) == 5
         assert all([name in [f"sample_{i}.h5" for i in range(1, 6)] for name in sample_names])
+
+
+def test_exclude_classes():
+    # with semantic mask only
+    semantic_mask = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    exclude_classes_list = [2, 5, 8]
+    expected_semantic_mask = np.array([[1, 0, 3], [4, 0, 6], [7, 0, 9]])
+    
+    updated_semantic_mask = exclude_classes(semantic_mask, exclude_classes_list)
+    np.testing.assert_array_equal(updated_semantic_mask, expected_semantic_mask)
+
+    # with semantic and instance mask
+    instance_mask = np.array([[9, 8, 7], [6, 5, 4], [3, 2, 1]])
+    semantic_mask = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    exclude_classes_list = [2, 5, 8]
+    expected_instance_mask = np.array([[9, 0, 7], [6, 0, 4], [3, 0, 1]])
+    
+    updated_semantic_mask, updated_instance_mask = exclude_classes(
+        semantic_mask, exclude_classes_list, instance_mask
+    )
+    np.testing.assert_array_equal(updated_semantic_mask, expected_semantic_mask)
+    np.testing.assert_array_equal(updated_instance_mask, expected_instance_mask)
+
+
+def test_transform_semantic_mask():
+    # transform semantic labels using a mapping dictionary
+    semantic_mask = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+    mapping_dict = {0: 10, 1: 11, 2: 12, 3: 13, 4: 14, 5: 15, 6: 16, 7: 17, 8: 18}
+    expected_transformed_mask = np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]])
+    
+    transformed_mask = transform_semantic_mask(semantic_mask, mapping_dict)
+    np.testing.assert_array_equal(transformed_mask, expected_transformed_mask)
