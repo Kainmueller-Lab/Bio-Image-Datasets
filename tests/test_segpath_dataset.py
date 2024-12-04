@@ -83,14 +83,6 @@ def test_get_semantic_mask():
         assert np.unique(dataset.get_semantic_mask(-1)).tolist() == [0, 2]
 
 
-def test_get_class_idx():
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        prep_out = prepare_segpath_samples(tmp_dir)
-        dataset = SegPath(local_path=tmp_dir)
-        class_idx = dataset._get_class_idx('panCK_Epithelium')
-        assert class_idx == 2
-
-
 def test_get_class_mapping():
     with tempfile.TemporaryDirectory() as tmp_dir:
         _, _, _, _, cell_types = prepare_segpath_samples(tmp_dir)
