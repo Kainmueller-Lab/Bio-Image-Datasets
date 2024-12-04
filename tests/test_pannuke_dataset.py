@@ -1,6 +1,5 @@
 from bio_image_datasets.pannuke import PanNukeDataset, mapping_dict
 import os
-import h5py
 import numpy as np
 import tempfile
 

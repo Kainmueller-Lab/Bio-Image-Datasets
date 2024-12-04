@@ -1,5 +1,4 @@
 import os
-import h5py
 import numpy as np
 from bio_image_datasets.dataset import Dataset
 from skimage.measure import label as relabel
@@ -160,7 +159,7 @@ class PanNukeDataset(Dataset):
         Args:
             masks (np.array): B x H x W x C 
         """
-        # reverse order of last dim of masks
+        # reverse order of last dim of masks to adhere to class mapping specified in mapping_dict
         masks = np.flip(masks, axis=-1)
         semantic_masks = np.argmax(masks, -1)
         return semantic_masks
@@ -172,7 +171,7 @@ class PanNukeDataset(Dataset):
         Args:
             masks (np.array): B x H x W x C 
         """
-        # reverse order of last dim of masks
+        # reverse order of last dim of masks to adhere to class mapping specified in mapping_dict
         instance_masks = np.max(masks[..., :-1], -1)
         # iterate over first dimension and use relabel on each individual tile
         for i in range(instance_masks.shape[0]):
