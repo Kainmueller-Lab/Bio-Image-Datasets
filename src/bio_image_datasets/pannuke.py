@@ -1,5 +1,4 @@
 import os
-import h5py
 import numpy as np
 from bio_image_datasets.dataset import Dataset
 
@@ -158,4 +157,30 @@ class PanNukeDataset(Dataset):
 
     def __repr__(self):
         """Return the string representation of the dataset."""
-        return f"SchuerchDataset ({self.local_path}, {len(self)} samples)"
+        return f"PanNuke Dataset ({self.local_path}, {len(self)} samples)"
+
+    def prepare_semantic_masks(self, masks):
+        """ Prepare the semantic segmentation mask based on the pannuke mask which contains each semantic class
+        in an individual channel which need to be collapsed via argmax
+
+        Args:
+            masks (np.array): B x H x W x C 
+        """
+        # reverse order of last dim of masks to adhere to class mapping specified in mapping_dict
+        masks = np.flip(masks, axis=-1)
+        semantic_masks = np.argmax(masks, -1)
+        return semantic_masks
+
+    def prepare_instance_masks(self, masks):
+        """ Prepare the instance segmentation mask based on the pannuke mask which contains each semantic class
+        in an individual channel which need to be collapsed via max
+
+        Args:
+            masks (np.array): B x H x W x C 
+        """
+        # reverse order of last dim of masks to adhere to class mapping specified in mapping_dict
+        instance_masks = np.max(masks[..., :-1], -1)
+        # iterate over first dimension and use relabel on each individual tile
+        for i in range(instance_masks.shape[0]):
+            instance_masks[i] = relabel(instance_masks[i], background=0)
+        return instance_masks
