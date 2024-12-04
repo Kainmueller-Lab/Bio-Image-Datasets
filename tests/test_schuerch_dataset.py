@@ -1,4 +1,4 @@
-from bio_image_datasets.schuerch_dataset import (SchuerchDataset, mapping_dict, exclude_classes,
+from bio_image_datasets.schuerch_dataset import (SchuerchDataset, coarse_mapping, exclude_classes,
                                                  transform_semantic_mask)
 import os
 import h5py
@@ -82,7 +82,7 @@ def test_get_class_mapping():
         file_paths = prepare_schuerch_samples(tmp_dir, num_samples=1)
         dataset = SchuerchDataset(local_path=tmp_dir)
         class_mapping = dataset.get_class_mapping()
-    assert class_mapping == mapping_dict
+    assert class_mapping == coarse_mapping
 
 
 def test_get_instance_mask():
