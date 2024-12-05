@@ -3,24 +3,52 @@ import scipy.io as sio
 import numpy as np
 from PIL import Image
 from pathlib import Path
-
+import warnings
 from bio_image_datasets.dataset import Dataset
+
+mapping_dict = {
+            1: "Normal Epithelial",
+            2: "Malignant/dysplastic epithelial",
+            3: "Fibroblast",
+            4: "Muscle",
+            5: "Inflammatory",
+            6: "Endothelial",
+            7: "Miscellaneous"
+        }
 
 
 class ConSePDataset(Dataset): 
     """Dataset class for the ConSeP dataset. 
-    Data was downloaded from https://www.kaggle.com/datasets/rftexas/tiled-consep-224x224px/code"""
+
+    The ConSeP dataset is introduced in the HoverNet-paper (https://arxiv.org/pdf/1812.06499). 
+    The dataset consists of 41 H&E stained image tiles, each of size 1,000×1,000 pixels at 40× 
+    objective magnification. Images were extracted from 16 colorectal adenocarcinoma (CRA) WSIs, 
+    each belonging to an individual patient, and scanned with an Omnyx VL120 scanner. Cell types 
+    present are: normal epithelial, malignant/dysplastic epithelial, fibroblast, muscle, inflammatory,
+    endothelial or miscellaneous. 
+    
+    The original dataset is linked at: https://warwick.ac.uk/fac/sci/dcs/research/tia/data/hovernet/. 
+    At the time of writing, the (tiled) dataset is available at:
+    https://www.kaggle.com/datasets/rftexas/tiled-consep-224x224px/code
+    
+    """
 
     def __init__(self, 
                  local_path): 
-        
+        """ Initialize the ConSeP dataset.
+
+        Args:
+            local_path (str): Path to the directory containing the dataset.
+        Returns:
+            ConSePDataset: An instance of the ConSePDataset.
+        """
+
         self.local_path = Path(local_path)
         self.image_path = self.local_path.joinpath("tiles")
         self.label_path = self.local_path.joinpath("labels")
         
         self.image_files = os.listdir(self.image_path)
         self.label_files = os.listdir(self.label_path)
-
 
     def __len__(self):
         """Return the length / number of samples of the dataset.
@@ -55,7 +83,6 @@ class ConSePDataset(Dataset):
             'instance_mask': instance_mask,
             'sample_name': self.get_sample_name(idx)
         }
-
         return sample
     
     def get_he(self, idx):
@@ -68,7 +95,6 @@ class ConSePDataset(Dataset):
         """
         img_array = np.array(Image.open(self.image_path.joinpath(self.image_files[idx])))
         return  np.transpose(img_array, (2, 0, 1)) # HWC to CHW 
-    
     
     def get_semantic_mask(self, idx):
         """Return the semantic mask at the given index.
@@ -94,10 +120,6 @@ class ConSePDataset(Dataset):
         for class_id, instance_ids in semantic_dict.items():
             semantic_mask[np.isin(instance_mask, instance_ids)] = class_id 
 
-        # 
-
-        # for instance_id, class_id in enumerate(class_ids):  
-        #     semantic_mask[instance_mask == (instance_id+1)] = class_id
         return semantic_mask
 
     def get_instance_mask(self, idx):
@@ -130,6 +152,15 @@ class ConSePDataset(Dataset):
             list: List of sample names.
         """
         return self.image_files
+    
+    def get_class_mapping(self):
+        """Return the class mapping for the dataset.
+        
+        Returns:
+            dict: A dictionary mapping class indices to class names.
+        """
+        warnings.warn("The class mappings might be incorrect")
+        return mapping_dict
 
     def __repr__(self):
         """Return the string representation of the dataset.

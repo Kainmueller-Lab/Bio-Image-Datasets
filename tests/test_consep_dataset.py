@@ -34,10 +34,10 @@ def prepare_consep_samples(output_dir, num_samples=5):
     for filename in file_paths:
 
         tmp_image_path = os.path.join(image_path, filename)
-        mock_image = Image.new('RGB', (244, 244), color=(255, 0, 0))
+        mock_image = Image.new('RGB', (224, 224), color=(255, 0, 0))
         mock_image.save(tmp_image_path)
 
-        instance_map = np.random.randint(0, 10, size=(244, 244), dtype=np.uint16)
+        instance_map = np.random.randint(0, 10, size=(224, 224), dtype=np.uint16)
         class_labels = np.random.randint(0, 3, size=(10), dtype=np.uint16)
         empty_array = np.zeros(10)
 
@@ -83,7 +83,7 @@ def test_get_he():
         file_paths = prepare_consep_samples(tmp_dir, num_samples=1)
         dataset = ConSePDataset(local_path=tmp_dir)
         he_data = dataset.get_he(0)
-        assert he_data.shape == (3, 244, 244)
+        assert he_data.shape == (3, 224, 224)
 
 
 def test_get_instance_mask():
@@ -91,7 +91,7 @@ def test_get_instance_mask():
         file_paths = prepare_consep_samples(tmp_dir, num_samples=5)
         dataset = ConSePDataset(local_path=tmp_dir)
         instance_mask = dataset.get_instance_mask(0)
-        assert instance_mask.shape == (244, 244)
+        assert instance_mask.shape == (224, 224)
 
 
 def test_get_semantic_mask():
@@ -99,7 +99,7 @@ def test_get_semantic_mask():
         file_paths = prepare_consep_samples(tmp_dir, num_samples=5)
         dataset = ConSePDataset(local_path=tmp_dir)
         semantic_mask = dataset.get_semantic_mask(0)
-        assert semantic_mask.shape == (244, 244)
+        assert semantic_mask.shape == (224, 224)
 
 
 def test_get_sample_name():
