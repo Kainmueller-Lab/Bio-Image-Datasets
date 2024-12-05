@@ -6,7 +6,8 @@ from tqdm import tqdm
 from bio_image_datasets.lizard_dataset import LizardDataset
 from bio_image_datasets.lizard2tiles import transform_to_tiles
 
-def create_lmdb_for_split(dataset, split_number, lmdb_path, tile_size=224):
+
+def create_lmdb_database(dataset, split_number, lmdb_path, tile_size=224):
     """
     Create an LMDB database for a specific split.
 
@@ -46,7 +47,7 @@ def create_lmdb_for_split(dataset, split_number, lmdb_path, tile_size=224):
                 tile_data = pickle.dumps(tile)
 
                 # Use the tile_idx as the key, converted to bytes
-                key = f"{tile_idx:08}".encode('ascii')
+                key = f"{tile_idx:08}".encode("ascii")
 
                 # Put the data into LMDB
                 txn.put(key, tile_data)
@@ -59,17 +60,25 @@ def create_lmdb_for_split(dataset, split_number, lmdb_path, tile_size=224):
     env.close()
     print(f"LMDB file created at {lmdb_path} with {tile_idx} tiles.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import argparse
 
     # Set up argument parser
-    parser = argparse.ArgumentParser(description='Create LMDB files for LizardDataset tiles.')
-    parser.add_argument('--local_path', type=str, default='~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads',
-                        help='Local path to the dataset.')
-    parser.add_argument('--output_dir', type=str, default='~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads/lizard_lmdb/',
-                        help='Output directory for LMDB files.')
-    parser.add_argument('--tile_size', type=int, default=224,
-                        help='Tile size (default: 224).')
+    parser = argparse.ArgumentParser(description="Create LMDB files for LizardDataset tiles.")
+    parser.add_argument(
+        "--local_path",
+        type=str,
+        default="~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads",
+        help="Local path to the dataset.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads/lizard_lmdb/",
+        help="Output directory for LMDB files.",
+    )
+    parser.add_argument("--tile_size", type=int, default=224, help="Tile size (default: 224).")
 
     args = parser.parse_args()
 
@@ -85,7 +94,7 @@ if __name__ == '__main__':
 
     # Process each split
     for split_number in [1, 2, 3]:
-        lmdb_filename = os.path.join(args.output_dir, f'lizard_split_{split_number}.lmdb')
+        lmdb_filename = os.path.join(args.output_dir, f"lizard_split_{split_number}.lmdb")
         print(f"\nProcessing split {split_number}...")
 
         create_lmdb_for_split(dataset, split_number, lmdb_filename, tile_size=args.tile_size)
