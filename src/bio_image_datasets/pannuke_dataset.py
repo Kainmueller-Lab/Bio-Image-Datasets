@@ -12,53 +12,58 @@ mapping_dict = {
             5: "Neoplastic cells",
         }
 
-
 class PanNukeDataset(Dataset):
     def __init__(self, local_path):
         """
-        Initializes the PanNukeDataset with the given local path and optional transform.
-        The three PanNuke datasets are located on the /fast file system on the MDC cluster under the paths
-        '/fast/AG_Kainmueller/data/pannuke/fold1', '/fast/AG_Kainmueller/data/pannuke/fold2', and '/fast/AG_Kainmueller/data/pannuke/fold3'.
+        Initializes the PanNukeDataset with the given local path.
+        The three PanNuke dataset is located on the /fast file system on the MDC cluster under the path
+        '/fast/AG_Kainmueller/data/pannuke'.
         Args:
             local_path (str): Path to the directory containing the files.
         """
-        # get fold number from local_path
-        if 'fold1' in local_path:
-            self.fold = 1
-        elif 'fold2' in local_path:
-            self.fold = 2
-        elif 'fold3' in local_path:
-            self.fold = 3
-        else:
-            raise ValueError("Invalid local path.")
-
         super().__init__(local_path)
-        self.images_file = os.path.join(local_path, f'images/fold{self.fold}/images.npy')
-        self.types_file = os.path.join(local_path, f'images/fold{self.fold}/types.npy')
-        self.masks_file = os.path.join(local_path, f'masks/fold{self.fold}/masks.npy')
 
-        if not self.images_file:
-            raise ValueError("No images file found in the specified directory.")
+        print("LOCAL PATH", local_path)
 
-        if not self.types_file:
-            raise ValueError("No types file found in the specified directory.")
+        self.images_files= {}
+        self.types_files = {}
+        self.masks_files = {}
 
-        if not self.masks_file:
-            raise ValueError("No masks file found in the specified directory.")
+        self.images = {}
+        self.types = {}
+        self.masks = {}
 
-        # put last channel in images to first
-        self.images = np.load(self.images_file)
-        self.images = np.moveaxis(self.images, -1, 1)
-        self.types = np.load(self.types_file)
-        self.masks = np.load(self.masks_file)
+        self.semantic_masks = {}
+        self.instance_masks = {}
 
-        self.semantic_masks = self.prepare_semantic_masks(self.masks)
-        self.instance_masks = self.prepare_instance_masks(self.masks)
+        folds = [1, 2, 3]
+        for fold in folds:
+            self.images_files[f'fold{fold}'] = os.path.join(local_path, f'fold{fold}/images/fold{fold}/images.npy')
+            self.types_files[f'fold{fold}'] = os.path.join(local_path, f'fold{fold}/images/fold{fold}/types.npy')
+            self.masks_files[f'fold{fold}'] = os.path.join(local_path, f'fold{fold}/masks/fold{fold}/masks.npy')
+
+            # put last channel in images to first
+            self.images[f'fold{fold}'] = np.moveaxis(np.load(self.images_files[f'fold{fold}']), -1, 1)
+            self.types[f'fold{fold}'] = np.load(self.types_files[f'fold{fold}'])
+            self.masks[f'fold{fold}'] = np.load(self.masks_files[f'fold{fold}'])
+
+            self.semantic_masks[f'fold{fold}'] = self.prepare_semantic_masks(self.masks[f'fold{fold}'])
+            self.instance_masks[f'fold{fold}'] = self.prepare_instance_masks(self.masks[f'fold{fold}'])
 
 
     def __len__(self):
         """Return the number of samples in the dataset."""
-        return np.shape(self.types)[0]
+        return np.shape(self.types[f'fold1'])[0] + np.shape(self.types[f'fold2'])[0] + np.shape(self.types[f'fold3'])[0]
+
+    def get_length_per_fold(self, fold):
+        """Return the number of samples in the given fold.
+        
+        Args:
+            fold (int): Number of the fold.
+        Returns:
+            int: Number of samples in the given fold.
+        """
+        return np.shape(self.types[f'fold{fold}'])[0]
 
     def __getitem__(self, idx):
         """Return a sample as a dictionary at the given index.
@@ -76,11 +81,13 @@ class PanNukeDataset(Dataset):
         if idx >= len(self):
             raise IndexError("Index out of bounds.")
 
+        fold, local_idx = self.get_fold_and_local_index(idx)
+
         data = {
-            "image": self.images[idx],
-            "type": self.types[idx],
-            "semantic_mask": self.semantic_masks[idx],
-            "instance_mask": self.instance_masks[idx],
+            "image": self.images[f'fold{fold}'][local_idx],
+            "type": self.types[f'fold{fold}'][local_idx],
+            "semantic_mask": self.semantic_masks[f'fold{fold}'][local_idx],
+            "instance_mask": self.instance_masks[f'fold{fold}'][local_idx],
             'sample_name': self.get_sample_name(idx)
         }
         return data
@@ -93,7 +100,8 @@ class PanNukeDataset(Dataset):
         Returns:
             np.ndarray: The HE image.
         """
-        return self.images[idx]
+        fold, local_idx = self.get_fold_and_local_index(idx)
+        return self.images[f'fold{fold}'][local_idx]
 
     def get_tissue_type(self, idx):
         """Load tissue type.
@@ -103,7 +111,8 @@ class PanNukeDataset(Dataset):
         Returns:
             tissue type (string): The tissue type.
         """
-        return self.types[idx]
+        fold, local_idx = self.get_fold_and_local_index(idx)
+        return self.types[f'fold{fold}'][local_idx]
 
     def get_class_mapping(self):
         """Return the class mapping for the dataset.
@@ -121,7 +130,8 @@ class PanNukeDataset(Dataset):
         Returns:
             np.ndarray: The instance mask.
         """
-        return self.instance_masks[idx]
+        fold, local_idx = self.get_fold_and_local_index(idx)
+        return self.instance_masks[f'fold{fold}'][local_idx]
 
     def get_semantic_mask(self, idx):
         """Return the semantic mask at the given index.
@@ -131,8 +141,8 @@ class PanNukeDataset(Dataset):
         Returns:
             np.ndarray: The semantic mask.
         """
-        return self.semantic_masks[idx]
-
+        fold, local_idx = self.get_fold_and_local_index(idx)
+        return self.semantic_masks[f'fold{fold}'][local_idx]
 
     def get_sample_name(self, idx):
         """Return the sample name for the given index.
@@ -140,13 +150,14 @@ class PanNukeDataset(Dataset):
         Args:
             idx (int): Index of the sample.
         Returns:
-            str: The sample name.
+            str: The sample name, consisting of the fold and local index, e.g. fold1_0
         """
-        return f"fold{self.fold}_{str(idx)}"
+        fold, local_idx = self.get_fold_and_local_index(idx)
+        return f"fold{fold}_{local_idx}"
 
     def get_sample_names(self):
         """Return the list of all sample names."""
-        return [f"fold{self.fold}_{str(i)}" for i in range(int(len(self)))]
+        return [self.get_sample_name(idx) for idx in range(int(len(self)))]
 
     def __repr__(self):
         """Return the string representation of the dataset."""
@@ -177,3 +188,24 @@ class PanNukeDataset(Dataset):
         for i in range(instance_masks.shape[0]):
             instance_masks[i] = relabel(instance_masks[i], background=0)
         return instance_masks
+
+    def get_fold_and_local_index(self, idx):
+        """
+        Determine the fold number and adjusted index within that fold for a given global index.
+
+        Args:
+            idx (int): Global index of the sample.
+
+        Returns:
+            tuple: A tuple containing the fold number and the adjusted index within that fold.
+
+        Raises:
+            IndexError: If the index is out of bounds for the dataset.
+        """
+        total_length = 0
+        for fold in [1, 2, 3]:
+            fold_length = np.shape(self.types[f'fold{fold}'])[0]
+            if idx < total_length + fold_length:
+                return fold, idx - total_length
+            total_length += fold_length
+        raise IndexError("Index out of bounds.")
