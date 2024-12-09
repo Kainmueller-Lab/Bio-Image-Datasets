@@ -1,4 +1,4 @@
-from bio_image_datasets.pannuke import PanNukeDataset, mapping_dict
+from bio_image_datasets.pannuke_dataset import PanNukeDataset, mapping_dict
 import os
 import numpy as np
 import tempfile
@@ -112,7 +112,7 @@ def test_get_sample_name():
         file_paths = prepare_pannuke_samples(local_path, num_samples=5)
         dataset = PanNukeDataset(local_path=local_path)
         sample_name = dataset.get_sample_name(0)
-        assert sample_name == "0"
+        assert sample_name == "fold1_0"
 
 def test_get_sample_names():
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -120,4 +120,4 @@ def test_get_sample_names():
         file_paths = prepare_pannuke_samples(local_path, num_samples=5)
         dataset = PanNukeDataset(local_path=local_path)
         sample_names = dataset.get_sample_names()
-        assert sample_names == ["0", "1", "2", "3", "4"]
+        assert sample_names == ["fold1_0", "fold1_1", "fold1_2", "fold1_3", "fold1_4"]
