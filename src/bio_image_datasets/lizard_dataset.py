@@ -44,7 +44,18 @@ class LizardDataset(Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
-        """Return the image and its corresponding label at the given index."""
+        """Return the image and its corresponding label at the given index.
+        
+        Args:
+            idx (int): Index of the sample to return.
+        
+        Returns:    
+            dict: A dictionary containing the following keys: 
+                image: H&E-stained image, 
+                semantic mask: semantic segmentation mask, 
+                instance mask: instance segmentation mask, 
+                sample_name: name of the sample.
+        """
         image = self.get_he(idx)
         semantic_mask = self.get_semantic_mask(idx)
         instance_mask = self.get_instance_mask(idx)
@@ -59,7 +70,14 @@ class LizardDataset(Dataset):
         return sample
 
     def get_he(self, idx):
-        """Return the H&E-stained image at the given index."""
+        """Return the H&E-stained image at the given index.
+        
+        Args:
+            idx (int): Index of the sample to return.
+
+        Returns:
+            np.ndarray: H&E-stained image in CHW format.
+        """
         image_path = self.image_paths[idx]
         image = Image.open(image_path).convert('RGB')
         image = np.array(image)
@@ -67,7 +85,13 @@ class LizardDataset(Dataset):
         return image
 
     def get_semantic_mask(self, idx):
-        """Return the semantic segmentation mask at the given index."""
+        """Return the semantic segmentation mask at the given index.
+        
+        Args:
+            idx (int): Index of the sample to return.
+        Returns:
+            np.ndarray: Semantic segmentation mask.
+        """
         label_data = self._load_label(idx)
         inst_map = label_data['inst_map']
         classes = np.atleast_1d(np.squeeze(label_data['class']))
@@ -81,17 +105,33 @@ class LizardDataset(Dataset):
         return semantic_mask
 
     def get_instance_mask(self, idx):
-        """Return the instance segmentation mask at the given index."""
+        """Return the instance segmentation mask at the given index.
+        
+        Args:
+            idx (int): Index of the sample to return.
+        Returns:
+            np.ndarray: Instance segmentation mask.
+        """
         label_data = self._load_label(idx)
         inst_map = label_data['inst_map']
         return inst_map
 
     def get_sample_name(self, idx):
-        """Return the sample name at the given index."""
+        """Return the sample name at the given index.
+    
+        Args:
+            idx (int): Index of the sample to return.
+        Returns:
+            str: Name of the sample
+        """
         return self.sample_names[idx]
 
     def get_sample_names(self):
-        """Return the list of sample names."""
+        """Return the list of sample names.
+        
+        Returns:
+            List[str]: List of sample names.
+        """
         return self.sample_names
 
     def _load_label(self, idx):
