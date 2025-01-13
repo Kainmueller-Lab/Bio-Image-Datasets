@@ -17,22 +17,23 @@ def prepare_arctique_samples(output_dir, num_samples=5):
         list: List of paths to the created mock files.
     """
     os.makedirs(output_dir, exist_ok=True)
-    for folder_name in ["images", "masks/semantic_noise_0", "masks/instance_noise_0"]:
+    for folder_name in ["/train/images", "/train/masks/semantic_noise_0", "/train/masks/instance_noise_0"]:
         os.makedirs(os.path.join(output_dir, folder_name), exist_ok=True)
     
     for i in range(num_samples):
         img_name = f"img_{i}.png"
-        tmp_img_path = os.path.join(output_dir, img_name)
+        tmp_img_path = os.path.join(output_dir, "/train/images", img_name)
         mock_image = Image.new('RGB', (512, 512), color=(255, 0, 0))
+        mock_image.save(tmp_img_path)
 
         mask_name = f"{i}.png"
         instances = np.random.randint(0, 100, size=(512, 512), dtype=np.uint16)
         mock_mask_instances = Image.fromarray(instances)
-        mock_mask_instances.save(os.path.join(output_dir, "masks/instance_noise_0", mask_name))
+        mock_mask_instances.save(os.path.join(output_dir, "/train/masks/instance_noise_0", mask_name))
                         
         classes = np.random.randint(0, 6, size=(512, 512), dtype=np.uint16)
         mock_mask_semantic = Image.fromarray(classes)
-        mock_mask_semantic.save(os.path.join(output_dir, "masks/semantic_noise_0", mask_name))
+        mock_mask_semantic.save(os.path.join(output_dir, "/train/masks/semantic_noise_0", mask_name))
 
 def test_len():
     with tempfile.TemporaryDirectory() as tmp_dir:
