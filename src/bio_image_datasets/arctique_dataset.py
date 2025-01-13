@@ -74,7 +74,7 @@ class ArctiqueDataset(Dataset):
             np.ndarray: The HE image.
         """
         sample_ID = self.sample_IDs[idx]
-        img = skimage.io.imread(os.path.join(self.images_folder, f"img_{sample_ID}.png")),
+        img = skimage.io.imread(os.path.join(self.images_folder, f"img_{sample_ID}.png"))
         return img
 
 
