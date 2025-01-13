@@ -75,7 +75,7 @@ class ArctiqueDataset(Dataset):
         """
         sample_ID = self.sample_IDs[idx]
         img = skimage.io.imread(os.path.join(self.images_folder, f"img_{sample_ID}.png"))
-        return img
+        return img.transpose() # Transpose to have the channels first
 
 
     def get_class_mapping(self):
