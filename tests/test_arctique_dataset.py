@@ -103,6 +103,6 @@ def test_get_sample_names():
     with tempfile.TemporaryDirectory() as tmp_dir:
         local_path = os.path.join(tmp_dir)
         prepare_arctique_samples(local_path)
-        dataset = ArctiqueDataset(local_path=local_path, num_samples=5)
+        dataset = ArctiqueDataset(local_path=local_path)
         sample_names = dataset.get_sample_names()
         assert len(sample_names) == 5
