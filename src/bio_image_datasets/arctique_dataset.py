@@ -30,9 +30,9 @@ class ArctiqueDataset(Dataset):
 
         print("LOCAL PATH", local_path)
 
-        self.images_folder = os.path.join(local_path, f'/train/images/')
-        self.semantic_masks_folder = os.path.join(local_path, f'/train/masks/semantic_noise_0')
-        self.instance_masks_folder = os.path.join(local_path, f'/train/masks/instance_noise_0')
+        self.images_folder = os.path.join(local_path, f'train/images/')
+        self.semantic_masks_folder = os.path.join(local_path, f'train/masks/semantic_noise_0')
+        self.instance_masks_folder = os.path.join(local_path, f'train/masks/instance_noise_0')
         self.sample_IDs = [int(name.split("_")[1].split(".")[0]) for name in os.listdir(self.images_folder)]
 
 
