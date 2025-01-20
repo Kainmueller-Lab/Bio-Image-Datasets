@@ -21,8 +21,8 @@ class ArctiqueDataset(Dataset):
     def __init__(self, local_path):
         """
         Initializes the ArctiqueDataset with the given local path.
-        The three PanNuke dataset is located on the /fast file system on the MDC cluster under the path
-        '/fast/AG_Kainmueller/synth_unc_models/data/v_review_sample1500_NOISY'.
+        The dataset is located on the /fast file system on the MDC cluster under the path
+        '/fast/AG_Kainmueller/data/patho_foundation_model_bench_data/arctique_dataset/arctique'.
         Args:
             local_path (str): Path to the directory containing the files.
         """
@@ -30,9 +30,9 @@ class ArctiqueDataset(Dataset):
 
         print("LOCAL PATH", local_path)
 
-        self.images_folder = os.path.join(local_path, f'train/images/')
-        self.semantic_masks_folder = os.path.join(local_path, f'train/masks/semantic_noise_0')
-        self.instance_masks_folder = os.path.join(local_path, f'train/masks/instance_noise_0')
+        self.images_folder = os.path.join(local_path, f'images/')
+        self.semantic_masks_folder = os.path.join(local_path, f'masks/semantic')
+        self.instance_masks_folder = os.path.join(local_path, f'masks/instance')
         self.sample_IDs = [int(name.split("_")[1].split(".")[0]) for name in os.listdir(self.images_folder)]
 
 
