@@ -42,8 +42,6 @@ class PanNukeDataset(Dataset):
             self.types_files[f'fold{fold}'] = os.path.join(local_path, f'fold{fold}/images/fold{fold}/types.npy')
             self.masks_files[f'fold{fold}'] = os.path.join(local_path, f'fold{fold}/masks/fold{fold}/masks.npy')
 
-            print(len(self.images_files[f'fold{fold}']))
-
             # put last channel in images to first
             self.images[f'fold{fold}'] = np.moveaxis(np.load(self.images_files[f'fold{fold}']), -1, 1)
             self.types[f'fold{fold}'] = np.load(self.types_files[f'fold{fold}'])
