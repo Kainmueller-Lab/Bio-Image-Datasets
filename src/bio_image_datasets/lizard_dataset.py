@@ -5,6 +5,18 @@ import numpy as np
 from PIL import Image
 from bio_image_datasets.dataset import Dataset
 
+
+mapping_dict ={
+    "0": "background",
+    "1": "Neutrophil",
+    "2": "Epithelial",
+    "3": "Lymphocyte",
+    "4": "Plasma",
+    "5": "Eosinophil",
+    "6": "Connective tissue"
+}
+
+
 class LizardDataset(Dataset):
     """Dataset class for the Lizard dataset."""
 
@@ -83,6 +95,14 @@ class LizardDataset(Dataset):
         label_data = self._load_label(idx)
         inst_map = label_data['inst_map']
         return inst_map
+    
+    def get_class_mapping(self):
+        """Return the class mapping for the dataset.
+        
+        Returns:
+            dict: A dictionary mapping class indices to class names.
+        """
+        return mapping_dict
 
     def get_sample_name(self, idx):
         """Return the sample name at the given index."""
