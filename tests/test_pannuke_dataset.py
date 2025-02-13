@@ -3,7 +3,6 @@ import os
 import numpy as np
 import tempfile
 
-
 def prepare_pannuke_samples(output_dir, num_samples_per_fold=5):
     """
     Creates mock files adhering to the PanNuke dataset specifications.
@@ -86,7 +85,7 @@ def test_get_class_mapping():
         prepare_pannuke_samples(local_path, num_samples_per_fold=5)
         dataset = PanNukeDataset(local_path=local_path)
         class_mapping = dataset.get_class_mapping()
-    assert class_mapping == mapping_dict
+        assert class_mapping == mapping_dict
 
 
 def test_get_instance_mask():
@@ -96,6 +95,7 @@ def test_get_instance_mask():
         dataset = PanNukeDataset(local_path=local_path)
         instace_mask = dataset.get_instance_mask(0)
         assert instace_mask.shape == (256, 256)
+        assert np.issubdtype(instace_mask.dtype, np.integer)
 
 
 def test_get_semantic_mask():
@@ -105,6 +105,7 @@ def test_get_semantic_mask():
         dataset = PanNukeDataset(local_path=local_path)
         semantic_mask = dataset.get_semantic_mask(0)
         assert semantic_mask.shape == (256, 256)
+        assert np.issubdtype(semantic_mask.dtype, np.integer)
 
 
 def test_get_sample_name():
