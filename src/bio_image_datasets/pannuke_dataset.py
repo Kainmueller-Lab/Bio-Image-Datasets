@@ -187,7 +187,7 @@ class PanNukeDataset(Dataset):
         # iterate over first dimension and use relabel on each individual tile
         for i in range(instance_masks.shape[0]):
             instance_masks[i] = relabel(instance_masks[i], background=0)
-        instance_masks = instance_masks.astype(np.uint8)
+        instance_masks = instance_masks.astype(np.uint16)
         return instance_masks
 
     def get_fold_and_local_index(self, idx):
