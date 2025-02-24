@@ -1,9 +1,10 @@
 import os
-import h5py
-import numpy as np
-from bio_image_datasets.dataset import Dataset
 from copy import copy
 
+import h5py
+import numpy as np
+
+from bio_image_datasets.dataset import Dataset
 
 mapping_dict = {
     0: "background",
@@ -100,11 +101,13 @@ semantic_id_old_to_new = {
 
 def transform_semantic_mask(semantic_mask, mapping_dict):
     """Transform the semantic mask using the given mapping dictionary.
-    
+
     Args:
         semantic_mask (np.ndarray): The semantic mask.
         mapping_dict (dict): A dictionary mapping class indices to class names.
-    Returns:
+
+    Returns
+    -------
         np.ndarray: The transformed semantic mask.
     """
     transformed_mask = np.zeros_like(semantic_mask)
@@ -115,17 +118,19 @@ def transform_semantic_mask(semantic_mask, mapping_dict):
 
 def exclude_classes(semantic_mask, exclude_classes, instance_mask=None):
     """Exclude classes from the data.
-    
+
     Args:
         semantic_mask (np.ndarray): The semantic mask.
         exclude_classes (list): List of classes to exclude.
         instance_mask (np.ndarray): The instance mask.
-    Returns:
+
+    Returns
+    -------
         np.ndarray: The updated semantic mask.
         optional np.ndarray: The updated instance mask.
     """
     # Make a copy of the input masks
-    semantic_mask = copy(semantic_mask)	
+    semantic_mask = copy(semantic_mask)
     if instance_mask is not None:
         instance_mask = copy(instance_mask)
     # Exclude classes
@@ -139,16 +144,19 @@ def exclude_classes(semantic_mask, exclude_classes, instance_mask=None):
 
 
 class SchuerchDataset(Dataset):
+    """Dataset class for the Schuerch dataset."""
+
     def __init__(self, local_path):
-        """
-        Initializes the SchuerchDataset with the given local path and optional transform.
+        """Initializes the SchuerchDataset with the given local path and optional transform.
+
         The dataset is located on the /fast file system on the MDC cluster under this path
         '/fast/AG_Kainmueller/jrumber/data/SchuerchData/preprocessed'.
+
         Args:
             local_path (str): Path to the directory containing the HDF files.
         """
         super().__init__(local_path)
-        self.files = [f for f in os.listdir(local_path)]
+        self.files = os.listdir(local_path)
         if not self.files:
             raise ValueError("No HDF files found in the specified directory.")
         self.file_paths = [os.path.join(local_path, f) for f in self.files]
@@ -160,10 +168,12 @@ class SchuerchDataset(Dataset):
 
     def __getitem__(self, idx):
         """Return a sample as a dictionary at the given index.
-        
+
         Args:
             idx (int): Index of the sample.
-        Returns:
+
+        Returns
+        -------
             dict: A dictionary containing the following keys:
                 - "gt_ct": Ground truth cell type mask.
                 - "gt_inst": Ground truth instance mask.
@@ -183,11 +193,13 @@ class SchuerchDataset(Dataset):
         return data
 
     def get_he(self, idx):
-        """
-        Load the hematoxylin and eosin (HE) image for the given index.
+        """Load the hematoxylin and eosin (HE) image for the given index.
+
         Args:
             idx (int): Index of the sample.
-        Returns:
+
+        Returns
+        -------
             np.ndarray: The HE image.
         """
         if idx >= len(self):
@@ -198,10 +210,12 @@ class SchuerchDataset(Dataset):
 
     def get_if(self, idx):
         """Load immunofluorescence (IFL) data for the given index.
-        
+
         Args:
             idx (int): Index of the sample.
-        Returns:
+
+        Returns
+        -------
             np.ndarray: The immunofluorescence data.
         """
         if idx >= len(self):
@@ -212,18 +226,21 @@ class SchuerchDataset(Dataset):
 
     def get_class_mapping(self):
         """Return the class mapping for the dataset.
-        
-        Returns:
+
+        Returns
+        -------
             dict: A dictionary mapping class indices to class names.
         """
         return coarse_mapping
 
     def get_instance_mask(self, idx):
         """Return the instance mask at the given index.
-        
+
         Args:
             idx (int): Index of the sample.
-        Returns:
+
+        Returns
+        -------
             np.ndarray: The instance mask.
         """
         if idx >= len(self):
@@ -239,7 +256,7 @@ class SchuerchDataset(Dataset):
 
     def get_semantic_mask(self, idx):
         """Return the semantic mask at the given index.
-        
+
         Args:
             idx (int): Index of the sample.
         Returns:
@@ -255,10 +272,12 @@ class SchuerchDataset(Dataset):
 
     def get_sample_name(self, idx):
         """Return the sample name for the given index.
-        
+
         Args:
             idx (int): Index of the sample.
-        Returns:
+
+        Returns
+        -------
             str: The sample name.
         """
         if idx >= len(self):
