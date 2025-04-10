@@ -1,53 +1,59 @@
 import os
-from typing import Callable, Optional, List
-import scipy.io as sio
+from typing import Callable, List, Optional
+
 import numpy as np
+import scipy.io as sio
 from PIL import Image
+
 from bio_image_datasets.dataset import Dataset
 
-
-mapping_dict ={
+mapping_dict = {
     "0": "background",
     "1": "Neutrophil",
     "2": "Epithelial",
     "3": "Lymphocyte",
     "4": "Plasma",
     "5": "Eosinophil",
-    "6": "Connective tissue"
+    "6": "Connective tissue",
 }
 
 
 class LizardDataset(Dataset):
     """Dataset class for the Lizard dataset."""
 
-    def __init__(self, 
-                 local_path: str = '~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads', 
-        ):
+    def __init__(
+        self,
+        local_path: str = "~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads",
+        with_fine_grained_labels: bool = False,
+    ):
         super().__init__(local_path)
         self.local_path = os.path.expanduser(local_path)
+        self.with_fine_grained_labels = with_fine_grained_labels
+        if with_fine_grained_labels:
+            self.mapping_dict = {}
         self.image_paths = []
         self.label_paths = []
         self.sample_names = []
 
         # Define image directories
         image_dirs = [
-            os.path.join(self.local_path, 'lizard_images1', 'Lizard_Images1'),
-            os.path.join(self.local_path, 'lizard_images2', 'Lizard_Images2')
+            os.path.join(self.local_path, "lizard_images1", "Lizard_Images1"),
+            os.path.join(self.local_path, "lizard_images2", "Lizard_Images2"),
         ]
         # Define label directory
-        label_dir = os.path.join(self.local_path, 'lizard_labels', 'Lizard_Labels', 'Labels')
+        label_dir = os.path.join(self.local_path, "lizard_labels", "Lizard_Labels", "Labels")
 
         # Collect image and label file paths
         for image_dir in image_dirs:
             for file_name in os.listdir(image_dir):
-                if file_name.endswith('.png'):
+                if file_name.endswith(".png"):
                     image_path = os.path.join(image_dir, file_name)
-                    label_name = file_name.replace('.png', '.mat')
+                    label_name = file_name.replace(".png", ".mat")
                     label_path = os.path.join(label_dir, label_name)
                     if os.path.exists(label_path):
                         self.image_paths.append(image_path)
                         self.label_paths.append(label_path)
-                        self.sample_names.append(file_name.replace('.png', ''))
+                        self.sample_names.append(file_name.replace(".png", ""))
                     else:
                         print(f"Warning: Label file {label_name} not found for image {file_name}")
 
@@ -61,27 +67,27 @@ class LizardDataset(Dataset):
         semantic_mask = self.get_semantic_mask(idx)
         instance_mask = self.get_instance_mask(idx)
         sample = {
-            'image': image,
-            'semantic_mask': semantic_mask,
-            'instance_mask': instance_mask,
-            'sample_name': self.get_sample_name(idx)
+            "image": image,
+            "semantic_mask": semantic_mask,
+            "instance_mask": instance_mask,
+            "sample_name": self.get_sample_name(idx),
         }
         return sample
 
     def get_he(self, idx):
         """Return the H&E-stained image at the given index."""
         image_path = self.image_paths[idx]
-        image = Image.open(image_path).convert('RGB')
+        image = Image.open(image_path).convert("RGB")
         image = np.array(image)
-        image = np.transpose(image, (2, 0, 1))  # HWC to CHW 
+        image = np.transpose(image, (2, 0, 1))  # HWC to CHW
         return image
 
     def get_semantic_mask(self, idx):
         """Return the semantic segmentation mask at the given index."""
         label_data = self._load_label(idx)
-        inst_map = label_data['inst_map']
-        classes = np.atleast_1d(np.squeeze(label_data['class']))
-        nuclei_id = np.atleast_1d(np.squeeze(label_data['id']))
+        inst_map = label_data["inst_map"]
+        classes = np.atleast_1d(np.squeeze(label_data["class"]))
+        nuclei_id = np.atleast_1d(np.squeeze(label_data["id"]))
         semantic_mask = np.zeros_like(inst_map, dtype=np.uint8)
 
         # Map instance labels to semantic labels
@@ -93,13 +99,14 @@ class LizardDataset(Dataset):
     def get_instance_mask(self, idx):
         """Return the instance segmentation mask at the given index."""
         label_data = self._load_label(idx)
-        inst_map = label_data['inst_map']
+        inst_map = label_data["inst_map"]
         return inst_map
-    
+
     def get_class_mapping(self):
         """Return the class mapping for the dataset.
-        
-        Returns:
+
+        Returns
+        -------
             dict: A dictionary mapping class indices to class names.
         """
         return mapping_dict
@@ -123,17 +130,29 @@ class LizardDataset(Dataset):
         return f"{self.__class__.__name__} ({self.local_path}) with {self.__len__()} samples"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    import argparse
     import os
+
     from matplotlib import pyplot as plt
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--local_path",
+        type=str,
+        default="~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads",
+    )
+    parser.add_argument("--with_fine_grained_labels", type=bool, default=False)
+    args = parser.parse_args()
+
     # Define the folder to save visualizations
-    visualization_folder = './visualizations'
+    visualization_folder = "./visualizations"
     os.makedirs(visualization_folder, exist_ok=True)
 
     # Instantiate the dataset with a sample transform
     dataset = LizardDataset(
-        local_path='~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads',
+        local_path=args.local_path,
+        with_fine_grained_labels=args.with_fine_grained_labels,
     )
 
     # Print basic information about the dataset
@@ -141,13 +160,19 @@ if __name__ == '__main__':
     print(f"Sample names: {dataset.get_sample_names()[:5]}")  # Display first 5 sample names
 
     # Test each method for the first sample
+    samples_idx = [11, 111, 222]
+    print(f"\nTesting methods for sample index: {samples_idx}")
+
+    for sample_idx in samples_idx:
+        # Load the full sample using __getitem__
+        sample = dataset[sample_idx]
+        print(f"Full sample: {sample['sample_name']}")
+        print(f"Image shape: {sample['image'].shape}")
+        print(f"Semantic mask shape: {sample['semantic_mask'].shape}")
+        print(f"Instance mask shape: {sample['instance_mask'].shape}")
+
     sample_idx = 111
-    print(f"\nTesting methods for sample index: {sample_idx}")
-
-    # Get the sample name
     sample_name = dataset.get_sample_name(sample_idx)
-    print(f"Sample name: {sample_name}")
-
     # Load and save the H&E image
     image = dataset.get_he(sample_idx)
     plt.figure()
@@ -155,8 +180,8 @@ if __name__ == '__main__':
     image = np.transpose(image, (1, 2, 0))
     plt.imshow(image)
     plt.title(f"H&E Image - {sample_name}")
-    plt.axis('off')
-    he_image_path = os.path.join(visualization_folder, f'{sample_name}_he_image.png')
+    plt.axis("off")
+    he_image_path = os.path.join(visualization_folder, f"{sample_name}_he_image.png")
     plt.savefig(he_image_path)
     plt.close()
     print(f"H&E image saved to: {he_image_path}")
@@ -164,10 +189,10 @@ if __name__ == '__main__':
     # Load and save the semantic mask
     semantic_mask = dataset.get_semantic_mask(sample_idx)
     plt.figure()
-    plt.imshow(semantic_mask, cmap='jet')
+    plt.imshow(semantic_mask, cmap="jet")
     plt.title(f"Semantic Mask - {sample_name}")
-    plt.axis('off')
-    semantic_mask_path = os.path.join(visualization_folder, f'{sample_name}_semantic_mask.png')
+    plt.axis("off")
+    semantic_mask_path = os.path.join(visualization_folder, f"{sample_name}_semantic_mask.png")
     plt.savefig(semantic_mask_path)
     plt.close()
     print(f"Semantic mask saved to: {semantic_mask_path}")
@@ -175,38 +200,31 @@ if __name__ == '__main__':
     # Load and save the instance mask
     instance_mask = dataset.get_instance_mask(sample_idx)
     plt.figure()
-    plt.imshow(instance_mask, cmap='jet')
+    plt.imshow(instance_mask, cmap="jet")
     plt.title(f"Instance Mask - {sample_name}")
-    plt.axis('off')
-    instance_mask_path = os.path.join(visualization_folder, f'{sample_name}_instance_mask.png')
+    plt.axis("off")
+    instance_mask_path = os.path.join(visualization_folder, f"{sample_name}_instance_mask.png")
     plt.savefig(instance_mask_path)
     plt.close()
     print(f"Instance mask saved to: {instance_mask_path}")
 
-    # Load the full sample using __getitem__
-    sample = dataset[sample_idx]
-    print(f"Full sample: {sample_name}")
-    print(f"Image shape: {sample['image'].shape}")
-    print(f"Semantic mask shape: {sample['semantic_mask'].shape}")
-    print(f"Instance mask shape: {sample['instance_mask'].shape}")
-
     # Save the full sample visualization
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     # Transpose the image back to HWC for display
-    sample['image'] = np.transpose(sample['image'], (1, 2, 0))
-    ax[0].imshow(sample['image'])
+    sample["image"] = np.transpose(sample["image"], (1, 2, 0))
+    ax[0].imshow(sample["image"])
     ax[0].set_title("H&E Image")
-    ax[0].axis('off')
+    ax[0].axis("off")
 
-    ax[1].imshow(sample['semantic_mask'], cmap='jet')
+    ax[1].imshow(sample["semantic_mask"], cmap="jet")
     ax[1].set_title("Semantic Mask")
-    ax[1].axis('off')
+    ax[1].axis("off")
 
-    ax[2].imshow(sample['instance_mask'], cmap='jet')
+    ax[2].imshow(sample["instance_mask"], cmap="jet")
     ax[2].set_title("Instance Mask")
-    ax[2].axis('off')
+    ax[2].axis("off")
 
-    full_sample_path = os.path.join(visualization_folder, f'{sample_name}_full_sample.png')
+    full_sample_path = os.path.join(visualization_folder, f"{sample_name}_full_sample.png")
     plt.suptitle(f"Sample Visualization - {sample_name}")
     plt.tight_layout()
     plt.savefig(full_sample_path)

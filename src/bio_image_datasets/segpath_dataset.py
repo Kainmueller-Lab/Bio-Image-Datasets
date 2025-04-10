@@ -1,8 +1,9 @@
 import os
+
 from skimage import io
 from skimage.transform import rescale
-from bio_image_datasets.dataset import Dataset
 
+from bio_image_datasets.dataset import Dataset
 
 
 class SegPath(Dataset):
@@ -28,15 +29,23 @@ class SegPath(Dataset):
         self.original_microns_per_pixel = 0.220818
         self.microns_per_pixel = microns_per_pixel
         self.all_cell_types = [
-            'panCK_Epithelium', 'CD3CD20_Lymphocyte', 'aSMA_SmoothMuscle', 'CD235a_RBC',
-            'CD45RB_Leukocyte', 'ERG_Endothelium', 'MIST1_PlasmaCell', 'MNDA_MyeloidCell']
+            "panCK_Epithelium",
+            "CD3CD20_Lymphocyte",
+            "aSMA_SmoothMuscle",
+            "CD235a_RBC",
+            "CD45RB_Leukocyte",
+            "ERG_Endothelium",
+            "MIST1_PlasmaCell",
+            "MNDA_MyeloidCell",
+        ]
         self._load_data()
 
     def _load_data(self):
-        """
+        """Load data.
+
         Load the data paths for the HE images and the semantic masks;
         the dataset is naturally split into 8 folders, one for each cell type;
-        as the dataset is quite large in total this function just loads all the folders 
+        as the dataset is quite large in total this function just loads all the folders
         existing and adjusts the mapping_dict accordingly.
 
         Args:
@@ -50,9 +59,9 @@ class SegPath(Dataset):
             image_paths (list): List of paths to the HE images
             annotated_class (list): Cell type wich was annotated in the image (one per image) as id
         """
-        self.mapping_dict = {0: 'Background'}
-        self.ext_HE = '_HE.png'
-        self.ext_sem_mask = '_mask.png'
+        self.mapping_dict = {0: "Background"}
+        self.ext_HE = "_HE.png"
+        self.ext_sem_mask = "_mask.png"
         self.sample_names = []  # list of base name of each image
         self.image_paths = []
         self.annotated_class = []  # stores the annotated cell type for each image as index
@@ -63,32 +72,41 @@ class SegPath(Dataset):
                 path = os.path.join(self.local_path, f)
                 files = sorted(os.listdir(path))
                 self.annotated_class += [cell_type_idx] * len(files)
-                samples = [g.replace(self.ext_HE, '') for g in files if g.endswith(self.ext_HE)]
+                samples = [g.replace(self.ext_HE, "") for g in files if g.endswith(self.ext_HE)]
                 self.sample_names += samples
-                self.image_paths += [
-                    os.path.join(path, s).replace(self.ext_HE, '') for s in samples]
+                self.image_paths += [os.path.join(path, s).replace(self.ext_HE, "") for s in samples]
 
     def download(self):
-        """The SegPath dataset is avaliable via zenodo (see https://dakomura.github.io/SegPath/)"""
+        """Download the SegPath dataset.
+
+        The SegPath dataset is avaliable via zenodo (see https://dakomura.github.io/SegPath/)
+        """
         pass
 
-    def _resize(self, image, interp='bilinear'):
+    def _resize(self, image, interp="bilinear"):
         """
         Resize an image to the desired resolution.
-        
+
         Args:
             image (np.array): Image to resize.
             interp (str): Interpolation method options: 'bilinear', 'nearest'.
-        Returns:
+
+        Returns
+        -------
             np.array: Resized image.
         """
-        mode = 0 if interp == 'nearest' else 1
+        mode = 0 if interp == "nearest" else 1
         anti_aliasing = mode == 1
         scale = self.original_microns_per_pixel / self.microns_per_pixel
         channel_axis = 2 if image.ndim == 3 else None
         return rescale(
-            image, scale, order=mode, anti_aliasing=anti_aliasing,
-            preserve_range=True, channel_axis=channel_axis).astype('uint8')
+            image,
+            scale,
+            order=mode,
+            anti_aliasing=anti_aliasing,
+            preserve_range=True,
+            channel_axis=channel_axis,
+        ).astype("uint8")
 
     def __len__(self):
         """Return the number of samples in the dataset."""
@@ -97,10 +115,12 @@ class SegPath(Dataset):
     def __getitem__(self, idx):
         """
         Fetches the HE image and the semantic mask at the given index.
-        
+
         Args:
             idx (int): Index of the sample.
-        Returns:
+
+        Returns
+        -------
             he (np.array; HxWx3): HE image.
             semantic_mask (np.array; HxW): Semantic mask.
         """
@@ -114,30 +134,33 @@ class SegPath(Dataset):
 
         Args:
             idx (int): The index of the image to retrieve.
-        Returns:
+
+        Returns
+        -------
             np.array: The HE image at the specified index with shape (HxWx3).
         """
-        image = io.imread(self.image_paths[idx]+self.ext_HE)
+        image = io.imread(self.image_paths[idx] + self.ext_HE)
         return self._resize(image)
 
     def get_semantic_mask(self, idx):
-        """
-        Return the semantic mask at the given index
-        
+        """Return the semantic mask at the given index.
+
         Args:
             idx (int): The index of the semantic mask to retrieve.
-        Returns:
+
+        Returns
+        -------
             np.array: The semantic mask at the specified index with shape (HxW).
         """
-        mask_binary = io.imread(self.image_paths[idx]+self.ext_sem_mask)
-        mask_binary = self._resize(mask_binary, interp='nearest')
+        mask_binary = io.imread(self.image_paths[idx] + self.ext_sem_mask)
+        mask_binary = self._resize(mask_binary, interp="nearest")
         class_idx = self.annotated_class[idx]
-        return ((mask_binary == 1)*class_idx).astype('uint8')
-    
+        return ((mask_binary == 1) * class_idx).astype("uint8")
+
     def get_mapping_dict(self):
         """
         Return the mapping dict for the dataset.
-        
+
         Args:
             None
         Returns:
@@ -152,21 +175,18 @@ class SegPath(Dataset):
     def get_sample_name(self, idx):
         """
         Return the sample name at the given index.
-        
+
         Args:
             idx (int): Index of the sample.
-        Returns:
-            None
         """
         return self.sample_names[idx]
 
     def get_sample_names(self):
         """
         Return the list of sample names.
-        
-        Args:
-            None
-        Returns:
+
+        Returns
+        -------
             list: List of sample names.
         """
         return self.sample_names

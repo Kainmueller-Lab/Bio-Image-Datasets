@@ -8,6 +8,7 @@ class Dataset(ABC):
     Args:
         local_path (str): Path to the dataset.
     """
+
     def __init__(self, local_path: str):
         self.local_path = local_path
 
@@ -20,7 +21,7 @@ class Dataset(ABC):
     def __getitem__(self, idx):
         """Return the item at the given index."""
         raise NotImplementedError
-    
+
     @abstractmethod
     def get_he(self, idx):
         """Return the he at the given index."""
@@ -48,4 +49,4 @@ class Dataset(ABC):
     @abstractmethod
     def __repr__(self):
         """Return the string representation of the dataset."""
-        return self.__class__.__name__ + ' (' + self.local_path + ')'
+        return self.__class__.__name__ + " (" + self.local_path + ")"

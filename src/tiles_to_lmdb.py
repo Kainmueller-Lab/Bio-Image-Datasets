@@ -1,0 +1,165 @@
+import argparse
+import os
+import pickle
+
+import fastremap
+import lmdb
+import numpy as np
+from tqdm import tqdm
+
+from bio_image_datasets.arctique_dataset import ArctiqueDataset
+from bio_image_datasets.consep_dataset import ConSePDataset
+from bio_image_datasets.lizard_dataset import LizardDataset
+from bio_image_datasets.pannuke_dataset import PanNukeDataset
+from bio_image_datasets.schuerch_dataset import SchuerchDataset
+from bio_image_datasets.segpath_dataset import SegPath
+
+from .split_to_tiles import PaddingType, transform_to_tiles
+
+
+def create_lmdb_database(
+    dataset,
+    lmdb_path: str,
+    tile_size: int = 224,
+    map_size: int = 2**37,
+    padding: PaddingType = PaddingType.NONE,
+):
+    """Create an LMDB database for a dataset.
+
+    Args:
+        dataset: Instance of a dataset.
+        lmdb_path: Path to the LMDB file to create.
+        tile_size: The size of the tiles to create.
+        map_size: The maximum size of the LMDB map. Use ~100GB as a default.
+    """
+    env = lmdb.open(lmdb_path, map_size=map_size)
+    tile_idx = 0  # Global tile index for keys
+
+    with env.begin(write=True) as txn:
+        # Loop over the dataset
+        for idx in tqdm(range(len(dataset))):
+            # Extract the relevant data from the dataset
+            img = dataset.get_he(idx)
+            inst_mask = dataset.get_instance_mask(idx).astype(np.uint16)
+            semantic_mask = dataset.get_semantic_mask(idx).astype(np.uint16)
+            sample_name = dataset.get_sample_name(idx)
+            sample_name = sample_name[: sample_name.find(".")]  # remove file extension
+            img_tiles = transform_to_tiles(img, tile_size=tile_size, padding=padding)
+            if inst_mask is not None:
+                inst_mask_tiles = transform_to_tiles(inst_mask, tile_size=tile_size)
+                # Renumber the instance mask tiles
+                inst_mask_tiles = [fastremap.renumber(tile, in_place=True)[0] for tile in inst_mask_tiles]
+            semantic_mask_tiles = transform_to_tiles(semantic_mask, tile_size=tile_size)
+            tile_names = [f"{sample_name}_TILE_{i}" for i in range(len(img_tiles))]
+            for i in range(len(img_tiles)):
+                tile_dict = {
+                    "tile_name": tile_names[i],
+                    "sample_name": sample_name,
+                    "image": img_tiles[i],
+                    "semantic_mask": semantic_mask_tiles[i],
+                }
+                if inst_mask is not None:
+                    tile_dict["instance_mask"] = inst_mask_tiles[i]
+                # Serialize the tile dictionary
+                tile_data = pickle.dumps(tile_dict)
+
+                # Use the tile_idx as the key, converted to bytes
+                key = f"{tile_idx:08}".encode("ascii")
+
+                # Put the data into LMDB
+                txn.put(key, tile_data)
+
+                tile_idx += 1
+
+                if tile_idx % 1000 == 0:
+                    print(f"Processed {tile_idx} tiles...")
+
+    env.close()
+    print(f"LMDB file created at {lmdb_path} with {tile_idx} tiles.")
+
+
+def parse_args():
+    # Set up argument parser
+    """
+    Parse command line arguments for `tiles_to_lmdb.py`.
+
+    Returns
+    -------
+        argparse.Namespace: Object containing the parsed arguments.
+    """
+    parser = argparse.ArgumentParser(description="Create LMDB files for dataset tiles.")
+    parser.add_argument(
+        "--local_path",
+        type=str,
+        # default="~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads/lizard_dataset/original_data/",
+        default="/home/fabian/raid5/schuerch_dataset/preprocessed/full",
+        help="Local path to the dataset.",
+    )
+    parser.add_argument(
+        "--output_path",
+        type=str,
+        # default="~/projects/lab_hackathon_2024/Bio-Image-Datasets/downloads/lizard_dataset/lizard_lmdb",
+        default="/home/fabian/raid5/schuerch_dataset/schuerch_dataset_lmdb/lmdb",
+        help="Output path for LMDB files.",
+    )
+    parser.add_argument("--tile_size", type=int, default=224, help="Tile size (default: 224).")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="schuerch",
+        choices=["arctique", "consep", "lizard", "pannuke", "schuerch", "segpath"],
+        help="Dataset to use. Options are: arctique, consep, lizard, pannuke, schuerch, segpath.",
+    )
+    parser.add_argument(
+        "--map_size",
+        type=int,
+        default=10**12,
+        help="Maximum size of the LMDB map. We use ~100GB as a default.",
+    )
+    parser.add_argument(
+        "--padding",
+        default=PaddingType.NONE,
+        type=PaddingType,
+        choices=[str(x) for x in PaddingType],
+        help="If and how we pad the tiles.",
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
+
+    args = parse_args()
+
+    # Expand user in paths
+    args.local_path = os.path.expanduser(args.local_path)
+    args.output_path = os.path.expanduser(args.output_path)
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+
+    # Map dataset names to classes
+    dataset_mapping = {
+        "arctique": ArctiqueDataset,
+        "consep": ConSePDataset,
+        "lizard": LizardDataset,
+        "pannuke": PanNukeDataset,
+        "schuerch": SchuerchDataset,
+        "segpath": SegPath,
+    }
+
+    # Instantiate the dataset based on the provided argument
+    dataset_class = dataset_mapping[args.dataset]
+    dataset = dataset_class(local_path=args.local_path)
+
+    print(f"Using dataset: {dataset.__class__.__name__}, with {len(dataset)} samples.")
+
+    # Create LMDB database
+    create_lmdb_database(
+        dataset,
+        lmdb_path=args.output_path,
+        tile_size=args.tile_size,
+        map_size=args.map_size,
+        padding=args.padding,
+    )

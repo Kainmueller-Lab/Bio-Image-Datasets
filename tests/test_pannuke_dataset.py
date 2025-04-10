@@ -1,7 +1,10 @@
-from bio_image_datasets.pannuke_dataset import PanNukeDataset, mapping_dict
 import os
-import numpy as np
 import tempfile
+
+import numpy as np
+
+from bio_image_datasets.pannuke_dataset import PanNukeDataset, mapping_dict
+
 
 def prepare_pannuke_samples(output_dir, num_samples_per_fold=5):
     """
@@ -15,20 +18,27 @@ def prepare_pannuke_samples(output_dir, num_samples_per_fold=5):
         list: List of paths to the created mock files.
     """
     os.makedirs(output_dir, exist_ok=True)
-    sample_tissue_types = [np.str_("Breast"), np.str_("Colon"), np.str_("Bile-duct"), np.str_("Esophagus")]
+    sample_tissue_types = [
+        np.str_("Breast"),
+        np.str_("Colon"),
+        np.str_("Bile-duct"),
+        np.str_("Esophagus"),
+    ]
 
     folds = [1, 2, 3]
     for fold in folds:
-        os.makedirs(os.path.join(output_dir, f'fold{fold}/images/fold{fold}'), exist_ok=True)
-        os.makedirs(os.path.join(output_dir, f'fold{fold}/masks/fold{fold}'), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, f"fold{fold}/images/fold{fold}"), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, f"fold{fold}/masks/fold{fold}"), exist_ok=True)
 
-        images = (np.random.rand(num_samples_per_fold, 256, 256, 3)*255).astype(np.float64)
-        types = np.tile(sample_tissue_types, num_samples_per_fold // len(sample_tissue_types) + 1)[:num_samples_per_fold]
-        masks = np.random.randint(0, 3000, size = (num_samples_per_fold, 256, 256, 6)).astype(np.float64)
+        images = (np.random.rand(num_samples_per_fold, 256, 256, 3) * 255).astype(np.float64)
+        types = np.tile(sample_tissue_types, num_samples_per_fold // len(sample_tissue_types) + 1)[
+            :num_samples_per_fold
+        ]
+        masks = np.random.randint(0, 3000, size=(num_samples_per_fold, 256, 256, 6)).astype(np.float64)
 
-        np.save(os.path.join(output_dir, f'fold{fold}/images/fold{fold}/images.npy'), images)
-        np.save(os.path.join(output_dir, f'fold{fold}/images/fold{fold}/types.npy'), types)
-        np.save(os.path.join(output_dir, f'fold{fold}/masks/fold{fold}/masks.npy'), masks)
+        np.save(os.path.join(output_dir, f"fold{fold}/images/fold{fold}/images.npy"), images)
+        np.save(os.path.join(output_dir, f"fold{fold}/images/fold{fold}/types.npy"), types)
+        np.save(os.path.join(output_dir, f"fold{fold}/masks/fold{fold}/masks.npy"), masks)
 
 
 def test_len():
@@ -38,15 +48,17 @@ def test_len():
         dataset = PanNukeDataset(local_path=local_path)
         assert len(dataset) == 15
 
+
 def test_get_length_per_fold():
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            local_path = os.path.join(tmp_dir)
-            prepare_pannuke_samples(local_path, num_samples_per_fold=5)
-            dataset = PanNukeDataset(local_path=local_path)
-            folds = [1, 2, 3]
-            for fold in folds:
-                fold_length = dataset.get_length_per_fold(fold)
-                assert fold_length == 5
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        local_path = os.path.join(tmp_dir)
+        prepare_pannuke_samples(local_path, num_samples_per_fold=5)
+        dataset = PanNukeDataset(local_path=local_path)
+        folds = [1, 2, 3]
+        for fold in folds:
+            fold_length = dataset.get_length_per_fold(fold)
+            assert fold_length == 5
+
 
 def test_getitem():
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -120,10 +132,27 @@ def test_get_sample_name():
         assert sample_name_f2 == "fold2_0"
         assert sample_name_f3 == "fold3_0"
 
+
 def test_get_sample_names():
     with tempfile.TemporaryDirectory() as tmp_dir:
         local_path = os.path.join(tmp_dir)
         prepare_pannuke_samples(local_path, num_samples_per_fold=5)
         dataset = PanNukeDataset(local_path=local_path)
         sample_names = dataset.get_sample_names()
-        assert sample_names == ["fold1_0", "fold1_1", "fold1_2", "fold1_3", "fold1_4", "fold2_0", "fold2_1", "fold2_2", "fold2_3", "fold2_4", "fold3_0", "fold3_1", "fold3_2", "fold3_3", "fold3_4"]
+        assert sample_names == [
+            "fold1_0",
+            "fold1_1",
+            "fold1_2",
+            "fold1_3",
+            "fold1_4",
+            "fold2_0",
+            "fold2_1",
+            "fold2_2",
+            "fold2_3",
+            "fold2_4",
+            "fold3_0",
+            "fold3_1",
+            "fold3_2",
+            "fold3_3",
+            "fold3_4",
+        ]

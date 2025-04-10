@@ -1,9 +1,15 @@
-from bio_image_datasets.schuerch_dataset import (SchuerchDataset, coarse_mapping, exclude_classes,
-                                                 transform_semantic_mask)
 import os
+import tempfile
+
 import h5py
 import numpy as np
-import tempfile
+
+from bio_image_datasets.schuerch_dataset import (
+    SchuerchDataset,
+    coarse_mapping,
+    exclude_classes,
+    transform_semantic_mask,
+)
 
 
 def prepare_schuerch_samples(output_dir, num_samples=5):
@@ -28,18 +34,22 @@ def prepare_schuerch_samples(output_dir, num_samples=5):
         with h5py.File(file_path, "w") as f:
             # Create mock data
             f.create_dataset(
-                "gt_ct", data=np.random.randint(0, 30, size=(1, 1440, 1920), dtype=np.uint16)
+                "gt_ct",
+                data=np.random.randint(0, 30, size=(1, 1440, 1920), dtype=np.uint16),
             )
             f.create_dataset(
-                "gt_inst", data=np.random.randint(0, 1000, size=(1, 1440, 1920), dtype=np.uint16)
+                "gt_inst",
+                data=np.random.randint(0, 1000, size=(1, 1440, 1920), dtype=np.uint16),
             )
             f.create_dataset(
-                "ifl", data=np.random.randint(0, 65535, size=(58, 1440, 1920), dtype=np.uint16)
+                "ifl",
+                data=np.random.randint(0, 65535, size=(58, 1440, 1920), dtype=np.uint16),
             )
             f.create_dataset(
-                "img", data=np.random.randint(0, 65535, size=(3, 1440, 1920), dtype=np.uint16)
+                "img",
+                data=np.random.randint(0, 65535, size=(3, 1440, 1920), dtype=np.uint16),
             )
-    
+
     return file_paths
 
 
@@ -115,7 +125,7 @@ def test_get_sample_names():
         dataset = SchuerchDataset(local_path=tmp_dir)
         sample_names = dataset.get_sample_names()
         assert len(sample_names) == 5
-        assert all([name in [f"sample_{i}.h5" for i in range(1, 6)] for name in sample_names])
+        assert all(name in [f"sample_{i}.h5" for i in range(1, 6)] for name in sample_names)
 
 
 def test_exclude_classes():
@@ -123,7 +133,7 @@ def test_exclude_classes():
     semantic_mask = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     exclude_classes_list = [2, 5, 8]
     expected_semantic_mask = np.array([[1, 0, 3], [4, 0, 6], [7, 0, 9]])
-    
+
     updated_semantic_mask = exclude_classes(semantic_mask, exclude_classes_list)
     np.testing.assert_array_equal(updated_semantic_mask, expected_semantic_mask)
 
@@ -132,10 +142,8 @@ def test_exclude_classes():
     semantic_mask = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     exclude_classes_list = [2, 5, 8]
     expected_instance_mask = np.array([[9, 0, 7], [6, 0, 4], [3, 0, 1]])
-    
-    updated_semantic_mask, updated_instance_mask = exclude_classes(
-        semantic_mask, exclude_classes_list, instance_mask
-    )
+
+    updated_semantic_mask, updated_instance_mask = exclude_classes(semantic_mask, exclude_classes_list, instance_mask)
     np.testing.assert_array_equal(updated_semantic_mask, expected_semantic_mask)
     np.testing.assert_array_equal(updated_instance_mask, expected_instance_mask)
 
@@ -145,6 +153,6 @@ def test_transform_semantic_mask():
     semantic_mask = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
     mapping_dict = {0: 10, 1: 11, 2: 12, 3: 13, 4: 14, 5: 15, 6: 16, 7: 17, 8: 18}
     expected_transformed_mask = np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]])
-    
+
     transformed_mask = transform_semantic_mask(semantic_mask, mapping_dict)
     np.testing.assert_array_equal(transformed_mask, expected_transformed_mask)

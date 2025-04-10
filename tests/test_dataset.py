@@ -17,17 +17,14 @@ def test_dataset():
 
         def get_semantic_mask(self, idx):
             return None
-        
+
         def get_instance_mask(self, idx):
             return None
-        
+
         def get_sample_name(self, idx):
             return None
-        
+
         def get_sample_names(self):
-            return None
-        
-        def get_instance_mask(self, idx):
             return None
 
         def get_class_mapping(self):
@@ -35,6 +32,6 @@ def test_dataset():
 
         def __repr__(self):
             return None
-    
-    child_dataset = ChildDataset(local_path='path/to/dataset')
+
+    child_dataset = ChildDataset(local_path="path/to/dataset")
     assert isinstance(child_dataset, Dataset)

@@ -1,15 +1,18 @@
 import os
-import scipy.io as sio
-import numpy as np
-from PIL import Image
 from pathlib import Path
+
+import numpy as np
+import scipy.io as sio
+from PIL import Image
 
 from bio_image_datasets.dataset import Dataset
 
 
 class ConSePDataset(Dataset):
     """Dataset class for the ConSeP dataset.
-    Data was downloaded from https://www.kaggle.com/datasets/rftexas/tiled-consep-224x224px/code"""
+
+    Data was downloaded from https://www.kaggle.com/datasets/rftexas/tiled-consep-224x224px/code
+    """
 
     def __init__(self, local_path):
         self.local_path = Path(local_path)
