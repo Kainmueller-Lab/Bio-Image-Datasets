@@ -25,7 +25,7 @@ coarse_mapping = {
 }
 
 
-class PatchoCell2Dataset(Dataset):
+class PathoCell2Dataset(Dataset):
     def __init__(self, local_path, version='v_0-0-1-beta'):
         """
         Initialize the PatchoCell2 dataset from TIFF files on disk.
@@ -230,4 +230,4 @@ class PatchoCell2Dataset(Dataset):
 
     def __repr__(self):
         """Return the string representation of the dataset."""
-        return f"PatchoCell2Dataset ({self.local_path}, {len(self)} samples)"
+        return f"PathoCell2Dataset ({self.local_path}, {len(self)} samples)"

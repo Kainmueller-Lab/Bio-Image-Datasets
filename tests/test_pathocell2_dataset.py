@@ -1,10 +1,10 @@
 import numpy as np
 from skimage import io
 
-from bio_image_datasets.pathocell2_dataset import PatchoCell2Dataset
+from bio_image_datasets.pathocell2_dataset import PathoCell2Dataset
 
 
-def test_patchocell2_dataset_reads_tiff_directories(tmp_path):
+def test_pathocell2_dataset_reads_tiff_directories(tmp_path):
     base = tmp_path / "phenocell" / "1-1"
     he_dir = base / "he_image"
     if_dir = base / "if_image"
@@ -29,7 +29,7 @@ def test_patchocell2_dataset_reads_tiff_directories(tmp_path):
     io.imsave(mask_dir / "reg070_B_nuclei_masks.tiff", nuclei_mask)
     io.imsave(pheno_dir / "reg070_B_pheno.tiff", semantic_mask)
 
-    dataset = PatchoCell2Dataset(str(base))
+    dataset = PathoCell2Dataset(str(base))
 
     assert len(dataset) == 1
     sample = dataset[0]
