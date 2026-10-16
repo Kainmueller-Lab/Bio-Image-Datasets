@@ -58,7 +58,7 @@ def test_getitem():
         assert "if_image" in sample
         assert "semantic_mask" in sample
         assert "instance_mask" in sample
-        assert "nuclei_mask" in sample
+        assert "cell_mask" in sample
         assert "sample_name" in sample
 
 
@@ -102,11 +102,13 @@ def test_get_semantic_mask():
         assert semantic_mask.shape == (32, 32)
 
 
-def test_get_nuclei_mask():
+def test_get_cell_mask():
     with tempfile.TemporaryDirectory() as tmp_dir:
         prepare_pathocell2_samples(tmp_dir, num_samples=4)
         dataset = PathoCell2Dataset(local_path=tmp_dir)
-        assert dataset.get_nuclei_mask(0) is None
+        cell_mask = dataset.get_cell_mask(0)
+        assert cell_mask is not None
+        assert cell_mask.shape == (32, 32)
 
 
 def test_get_sample_name():
