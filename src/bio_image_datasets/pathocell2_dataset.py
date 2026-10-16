@@ -86,7 +86,7 @@ class PathoCell2Dataset(Dataset):
         """Normalize sample names from different PatchoCell2 file naming conventions."""
         suffixes = [
             '_cell_masks', '_nuclei_masks', '_cell_mask', '_nuclei_mask',
-            '_pheno', '_phenotype', '_mask', '_masks', '_he', '_if'
+            '_pheno', '_phenotype', '_mask', '_masks', '_he', '_if', '_simple_cell_types'
         ]
         for suffix in suffixes:
             if file_name.endswith(suffix):
