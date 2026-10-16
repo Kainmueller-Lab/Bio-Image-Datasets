@@ -179,31 +179,31 @@ class PathoCell2Dataset(Dataset):
         return coarse_mapping
 
     def get_instance_mask(self, idx):
-        """Return the cell instance mask at the given index.
+        """Return the nuclei instance mask at the given index.
 
         In this dataset, instance files can be provided as separate cell and nuclei masks,
-        so the cell mask is treated as the primary instance mask and the nuclei mask is
-        exposed separately via get_nuclei_mask().
+        so the nuclei mask is treated as the primary instance mask and the cell mask is
+        exposed separately via get_cell_mask().
         """
         if idx >= len(self):
             raise IndexError("Index out of bounds.")
 
         sample_name = self.sample_names[idx]
-        cell_path, _ = self._get_instance_mask_paths(sample_name)
-        if cell_path is not None:
-            return self._load_mask_from_path(cell_path)
+        _, nuclei_path = self._get_instance_mask_paths(sample_name)
+        if nuclei_path is not None:
+            return self._load_mask_from_path(nuclei_path)
         return self._load_mask(self.instance_dir, idx)
 
-    def get_nuclei_mask(self, idx):
-        """Return the nuclei instance mask at the given index if it exists."""
+    def get_cell_mask(self, idx):
+        """Return the cell instance mask at the given index if it exists."""
         if idx >= len(self):
             raise IndexError("Index out of bounds.")
 
         sample_name = self.sample_names[idx]
-        _, nuclei_path = self._get_instance_mask_paths(sample_name)
-        if nuclei_path is None:
+        cell_path, _ = self._get_instance_mask_paths(sample_name)
+        if cell_path is None:
             return None
-        return self._load_mask_from_path(nuclei_path)
+        return self._load_mask_from_path(cell_path)
 
     def _load_mask_from_path(self, path):
         """Load a single mask from a TIFF path and sanitize its dimensionality."""
