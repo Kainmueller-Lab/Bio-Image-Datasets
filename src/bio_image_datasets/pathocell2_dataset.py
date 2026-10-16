@@ -158,7 +158,7 @@ class PathoCell2Dataset(Dataset):
             'if_image': self.get_if(idx),
             'semantic_mask': self.get_semantic_mask(idx),
             'instance_mask': self.get_instance_mask(idx),
-            'nuclei_mask': self.get_nuclei_mask(idx),
+            'cell_mask': self.get_cell_mask(idx),
             'sample_name': sample_name,
         }
 

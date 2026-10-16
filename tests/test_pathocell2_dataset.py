@@ -58,7 +58,7 @@ def test_getitem():
         assert "if_image" in sample
         assert "semantic_mask" in sample
         assert "instance_mask" in sample
-        assert "nuclei_mask" in sample
+        assert "cell_mask" in sample
         assert "sample_name" in sample
 
 
