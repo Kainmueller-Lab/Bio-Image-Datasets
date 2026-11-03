@@ -18,15 +18,15 @@ coarse_mapping = {
     7: 'Monocytes',
     8: 'Granulocytes',
     9: 'Endothelial Cells',
-    10: 'Smooth muscle Cells',
+    10: 'Smooth muscle Cells / Pericytes',
     11: 'Fibroblasts',
-    12: 'Pericytes',
+    12: 'Pericytes (outdated)',
     13: 'Dendritic Cells',
 }
 
 
 class PathoCell2Dataset(Dataset):
-    def __init__(self, local_path, version='v_0-0-1-beta'):
+    def __init__(self, local_path, version='v_0-0-1-beta', original_he_sample_names=None, registered=True):
         """
         Initialize the PatchoCell2 dataset from TIFF files on disk.
 
@@ -34,8 +34,11 @@ class PathoCell2Dataset(Dataset):
         <local_path>/annotation/dataset_versions/<version>/masks
         and <local_path>/annotation/dataset_versions/<version>/pheno
 
-        The H&E images are stored under:
+        The original H&E images are stored under:
         <local_path>/he_image
+
+        The registered H&E images are stored under:
+        <local_path>/he_image_registered
 
         The mIF images are stored under:
         <local_path>/if_image
@@ -43,12 +46,21 @@ class PathoCell2Dataset(Dataset):
         Args:
             local_path (str): Root directory containing the dataset folders.
             version (str): Dataset version folder name under annotation/dataset_versions.
+            original_he_sample_names (list[str] | None): Sample names that should use the
+                original (non-registered) H&E image instead of the registered one.
+            registered (bool): If True, use the registered H&E by default and only use the
+                original H&E for explicit sample names in ``original_he_sample_names``.
+                If False, use the original H&E for all samples.
         """
         super().__init__(local_path)
         self.local_path = os.path.expanduser(local_path)
         self.version = version
+        self.registered = registered
+        self.original_he_sample_names = {self._normalize_sample_name(name) for name in (original_he_sample_names or ())}
 
+        self.he_registered_dir = os.path.join(self.local_path, 'he_image_registered')
         self.he_dir = os.path.join(self.local_path, 'he_image')
+        self.he_dirs = self._resolve_he_dirs()
         self.if_dir = os.path.join(self.local_path, 'if_image')
         self.instance_dir = os.path.join(self.local_path, 'annotation', 'dataset_versions', self.version, 'masks')
         self.semantic_dir = os.path.join(self.local_path, 'annotation', 'dataset_versions', self.version, 'pheno')
@@ -57,13 +69,36 @@ class PathoCell2Dataset(Dataset):
         if not self.sample_names:
             raise ValueError(
                 "No matching TIFF samples were found in the expected directories. "
-                f"Looked for files under: {self.he_dir}, {self.if_dir}, {self.instance_dir}, and {self.semantic_dir}."
+                f"Looked for files under: {self.he_dirs}, {self.if_dir}, {self.instance_dir}, and {self.semantic_dir}."
             )
+
+    def _resolve_he_dirs(self):
+        """Return the registered H&E directory first, then the original H&E directory as fallback."""
+        he_dirs = []
+        for directory_path in [self.he_registered_dir, self.he_dir]:
+            if os.path.isdir(directory_path):
+                he_dirs.append(directory_path)
+
+        if not he_dirs:
+            he_dirs.append(self.he_dir)
+        return he_dirs
 
     def _discover_sample_names(self):
         """Collect sample names that exist in all required directories."""
-        directory_paths = [self.he_dir, self.if_dir, self.instance_dir, self.semantic_dir]
-        discovered = []
+        he_sample_stems = set()
+        for directory in self.he_dirs:
+            if not os.path.isdir(directory):
+                continue
+            for file_name in os.listdir(directory):
+                if not file_name.lower().endswith(('.tif', '.tiff', '.png')):
+                    continue
+                stem = os.path.splitext(file_name)[0]
+                sample_stem = self._sample_stem_from_file_name(stem)
+                if sample_stem is not None:
+                    he_sample_stems.add(sample_stem)
+
+        directory_paths = [self.if_dir, self.instance_dir, self.semantic_dir]
+        discovered = [he_sample_stems]
         for directory in directory_paths:
             if not os.path.isdir(directory):
                 raise FileNotFoundError(f"Required directory not found: {directory}")
@@ -82,30 +117,57 @@ class PathoCell2Dataset(Dataset):
         return common_names
 
     @staticmethod
-    def _sample_stem_from_file_name(file_name):
-        """Normalize sample names from different PatchoCell2 file naming conventions."""
+    def _normalize_sample_name(sample_name):
+        """Normalize sample-name matching across case differences."""
+        return sample_name.lower()
+
+    @classmethod
+    def _sample_stem_from_file_name(cls, file_name):
+        """Normalize PathoCell2 H&E file names to a canonical sample identifier."""
         suffixes = [
             '_cell_masks', '_nuclei_masks', '_cell_mask', '_nuclei_mask',
-            '_pheno', '_phenotype', '_mask', '_masks', '_he', '_if', '_simple_cell_types'
+            '_pheno', '_phenotype', '_mask', '_masks',
+            '_he_registered', '_he', '_if', '_simple_cell_types'
         ]
+        lowered_name = file_name.lower()
         for suffix in suffixes:
-            if file_name.endswith(suffix):
-                return file_name[:-len(suffix)]
-        return file_name
+            if lowered_name.endswith(suffix):
+                return cls._normalize_sample_name(file_name[:-len(suffix)])
+        return cls._normalize_sample_name(file_name)
 
     def _get_sample_path(self, directory, sample_name):
-        """Return the first matching file for a sample in a directory."""
-        candidates = []
-        for file_name in os.listdir(directory):
-            if file_name.lower().endswith(('.tif', '.tiff', '.png')):
-                stem = os.path.splitext(file_name)[0]
-                if self._sample_stem_from_file_name(stem) == sample_name:
-                    candidates.append(os.path.join(directory, file_name))
+        """Return the first matching file for a sample in the given directory priority order."""
+        if isinstance(directory, (list, tuple)):
+            directories = list(directory)
+        else:
+            directories = [directory]
 
-        if not candidates:
-            raise FileNotFoundError(f"No file for sample '{sample_name}' found in {directory}")
+        for current_directory in directories:
+            for file_name in sorted(os.listdir(current_directory)):
+                if file_name.lower().endswith(('.tif', '.tiff', '.png')):
+                    stem = os.path.splitext(file_name)[0]
+                    if self._sample_stem_from_file_name(stem) == sample_name:
+                        return os.path.join(current_directory, file_name)
 
-        return sorted(candidates)[0]
+        search_dirs = ', '.join(str(path) for path in directories)
+        raise FileNotFoundError(f"No file for sample '{sample_name}' found in {search_dirs}")
+
+    def _get_he_path(self, sample_name):
+        """Select the H&E image according to the registration mode and sample-specific overrides."""
+        normalized_name = self._normalize_sample_name(sample_name)
+
+        if self.registered:
+            preferred_dirs = [self.he_registered_dir, self.he_dir]
+            if normalized_name in self.original_he_sample_names and os.path.isdir(self.he_dir):
+                preferred_dirs = [self.he_dir, self.he_registered_dir]
+        else:
+            preferred_dirs = [self.he_dir, self.he_registered_dir]
+
+        preferred_dirs = [directory for directory in preferred_dirs if os.path.isdir(directory)]
+        if not preferred_dirs:
+            preferred_dirs = [self.he_dir]
+
+        return self._get_sample_path(preferred_dirs, normalized_name)
 
     def _get_instance_mask_paths(self, sample_name):
         """Return both cell and nuclei instance masks for a sample, if present."""
@@ -127,7 +189,11 @@ class PathoCell2Dataset(Dataset):
     def _load_image(self, directory, idx):
         """Load an image from TIFF and return it in channel-first layout."""
         sample_name = self.sample_names[idx]
-        image = np.asarray(io.imread(self._get_sample_path(directory, sample_name)))
+        if directory == self.he_dirs:
+            path = self._get_he_path(sample_name)
+        else:
+            path = self._get_sample_path(directory, sample_name)
+        image = np.asarray(io.imread(path))
 
         if image.ndim == 2:
             return image[np.newaxis, :, :]
@@ -166,7 +232,7 @@ class PathoCell2Dataset(Dataset):
         """Load the H&E image at the given index."""
         if idx >= len(self):
             raise IndexError("Index out of bounds.")
-        return self._load_image(self.he_dir, idx)
+        return self._load_image(self.he_dirs, idx)
 
     def get_if(self, idx):
         """Load the mIF image at the given index."""
