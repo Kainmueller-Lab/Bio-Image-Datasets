@@ -3,8 +3,16 @@ import tempfile
 
 import numpy as np
 from skimage import io
+from tifffile import imwrite
 
-from bio_image_datasets.pathocell2_dataset import PathoCell2Dataset, coarse_mapping
+from bio_image_datasets.pathocell2_dataset import (
+    PathoCell2Dataset,
+    coarse_mapping,
+    ct_rename_dict,
+    mapping_dict,
+    semantic_id_old_to_new,
+    transform_semantic_mask,
+)
 
 
 def prepare_pathocell2_samples(output_dir, num_samples=4, size=(32, 32)):
@@ -36,8 +44,8 @@ def prepare_pathocell2_samples(output_dir, num_samples=4, size=(32, 32)):
 
         io.imsave(os.path.join(he_dir, f"{sample_name}_he.tif"), he_image)
         io.imsave(os.path.join(if_dir, f"{sample_name}_if.tif"), if_image)
-        io.imsave(os.path.join(masks_dir, f"{sample_name}_cell_masks.tif"), instance_mask)
-        io.imsave(os.path.join(pheno_dir, f"{sample_name}_pheno.tif"), semantic_mask)
+        imwrite(os.path.join(masks_dir, f"{sample_name}_cell_masks.tif"), instance_mask, photometric="minisblack")
+        imwrite(os.path.join(pheno_dir, f"{sample_name}_pheno.tif"), semantic_mask, photometric="minisblack")
 
     return sample_names
 
@@ -236,6 +244,50 @@ def test_get_semantic_mask():
         dataset = PathoCell2Dataset(local_path=tmp_dir)
         semantic_mask = dataset.get_semantic_mask(0)
         assert semantic_mask.shape == (32, 32)
+
+
+def test_transform_semantic_mask():
+    semantic_mask = np.array([[0, 5, 6], [7, 12, 14], [15, 10, 13]], dtype=np.uint8)
+    expected = np.array([[0, 11, 5], [5, 8, 11], [11, 8, 10]], dtype=np.uint8)
+    transformed = transform_semantic_mask(semantic_mask, semantic_id_old_to_new)
+    np.testing.assert_array_equal(transformed, expected)
+
+
+def test_all_mapping_dict_class_names_are_renamable():
+    missing = sorted(set(mapping_dict.values()) - set(ct_rename_dict.keys()))
+    assert missing == []
+
+
+def test_get_semantic_mask_applies_cell_type_renaming():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        he_dir = os.path.join(tmp_dir, "he_image")
+        if_dir = os.path.join(tmp_dir, "if_image")
+        masks_dir = os.path.join(tmp_dir, "annotation", "dataset_versions", "v_0-0-1-beta", "masks")
+        pheno_dir = os.path.join(tmp_dir, "annotation", "dataset_versions", "v_0-0-1-beta", "pheno")
+        for directory in [he_dir, if_dir, masks_dir, pheno_dir]:
+            os.makedirs(directory, exist_ok=True)
+
+        sample_name = "sample_0"
+        he_image = np.zeros((32, 32, 3), dtype=np.uint8)
+        if_image = np.zeros((32, 32, 4), dtype=np.uint8)
+        instance_mask = np.zeros((32, 32), dtype=np.uint16)
+        semantic_mask = np.array(
+            [[5, 6, 7, 10], [12, 14, 15, 13], [1, 0, 3, 4], [8, 9, 2, 11]],
+            dtype=np.uint8,
+        )
+
+        io.imsave(os.path.join(he_dir, f"{sample_name}_he.tif"), he_image)
+        io.imsave(os.path.join(if_dir, f"{sample_name}_if.tif"), if_image)
+        imwrite(os.path.join(masks_dir, f"{sample_name}_cell_masks.tif"), instance_mask, photometric="minisblack")
+        imwrite(os.path.join(pheno_dir, f"{sample_name}_pheno.tif"), semantic_mask, photometric="minisblack")
+
+        dataset = PathoCell2Dataset(local_path=tmp_dir)
+        remapped = dataset.get_semantic_mask(0)
+        expected = np.array(
+            [[11, 5, 5, 8], [8, 11, 11, 10], [1, 0, 3, 4], [6, 7, 2, 9]],
+            dtype=np.uint8,
+        )
+        np.testing.assert_array_equal(remapped, expected)
 
 
 def test_get_cell_mask():
