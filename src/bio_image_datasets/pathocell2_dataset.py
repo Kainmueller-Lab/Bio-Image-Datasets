@@ -1,5 +1,4 @@
 import os
-import re
 
 import numpy as np
 from skimage import io
@@ -7,9 +6,9 @@ from skimage import io
 from bio_image_datasets.dataset import Dataset
 
 
-coarse_mapping = {
+mapping_dict = {
     0: 'Background',
-    1: 'Tumor cells',
+    1: 'Tumor Cells',
     2: 'T Cells',
     3: 'B Cells',
     4: 'Plasma Cells',
@@ -18,11 +17,75 @@ coarse_mapping = {
     7: 'Monocytes',
     8: 'Granulocytes',
     9: 'Endothelial Cells',
-    10: 'Smooth muscle Cells / Pericytes',
+    10: 'Smooth Muscle Cells',
     11: 'Fibroblasts',
-    12: 'Pericytes (outdated)',
+    12: 'Pericytes',
     13: 'Dendritic Cells',
+    14: 'Ganglion Cell / Nerve Fiber / Schwann Cell',
+    15: 'Adipocytes',
 }
+
+
+ct_rename_dict = {
+    "Background": "Background",
+    "Tumor Cells": "Tumor Cells",
+    "T Cells": "T Cells",
+    "B Cells": "B Cells",
+    "Plasma Cells": "Plasma Cells",
+    "NK Cells": "Other Cells",
+    "Macrophages": "Macrophages / Monocytes",
+    "Monocytes": "Macrophages / Monocytes",
+    "Granulocytes": "Granulocytes",
+    "Endothelial Cells": "Endothelial Cells",
+    "Smooth Muscle Cells": "Smooth Muscle Cells / Pericytes",
+    "Pericytes": "Smooth Muscle Cells / Pericytes",
+    "Fibroblasts": "Fibroblasts",
+    "Dendritic Cells": "Dendritic Cells",
+    "Ganglion Cell / Nerve Fiber / Schwann Cell": "Other Cells",
+    "Adipocytes": "Other Cells",
+}
+
+
+coarse_mapping = {
+    0: 'Background',
+    1: 'Tumor Cells',
+    2: 'T Cells',
+    3: 'B Cells',
+    4: 'Plasma Cells',
+    5: 'Macrophages / Monocytes',
+    6: 'Granulocytes',
+    7: 'Endothelial Cells',
+    8: 'Smooth Muscle Cells / Pericytes',
+    9: 'Fibroblasts',
+    10: 'Dendritic Cells',
+    11: 'Other Cells',
+}
+
+
+coarse_mapping_reverse = {v: k for k, v in coarse_mapping.items()}
+ct_rename_dict_new_class_names = {k: coarse_mapping_reverse[v] for k, v in ct_rename_dict.items()}
+
+
+def _build_semantic_id_mapping(old_id_to_name, name_to_new_id):
+    """Build old-id to new-id mapping and fail fast with a clear message on mismatches."""
+    missing_names = sorted({class_name for class_name in old_id_to_name.values() if class_name not in name_to_new_id})
+    if missing_names:
+        raise KeyError(
+            "Missing class names in ct_rename_dict for mapping_dict values: "
+            + ", ".join(missing_names)
+        )
+    return {old_id: name_to_new_id[class_name] for old_id, class_name in old_id_to_name.items()}
+
+
+semantic_id_old_to_new = _build_semantic_id_mapping(mapping_dict, ct_rename_dict_new_class_names)
+
+
+def transform_semantic_mask(semantic_mask, mapping):
+    """Transform semantic labels with an old-class-id to new-class-id mapping."""
+    transformed_mask = np.zeros_like(semantic_mask)
+    for old_id, new_id in mapping.items():
+        transformed_mask[semantic_mask == old_id] = new_id
+    return transformed_mask
 
 
 class PathoCell2Dataset(Dataset):
@@ -57,6 +120,7 @@ class PathoCell2Dataset(Dataset):
         self.version = version
         self.registered = registered
         self.original_he_sample_names = {self._normalize_sample_name(name) for name in (original_he_sample_names or ())}
+        self.transform_labels = lambda x: transform_semantic_mask(x, semantic_id_old_to_new)
 
         self.he_registered_dir = os.path.join(self.local_path, 'he_image_registered')
         self.he_dir = os.path.join(self.local_path, 'he_image')
@@ -282,7 +346,8 @@ class PathoCell2Dataset(Dataset):
         """Return the semantic cell type mask at the given index."""
         if idx >= len(self):
             raise IndexError("Index out of bounds.")
-        return self._load_mask(self.semantic_dir, idx)
+        semantic_mask = self._load_mask(self.semantic_dir, idx)
+        return self.transform_labels(semantic_mask)
 
     def get_sample_name(self, idx):
         """Return the sample name for the given index."""
